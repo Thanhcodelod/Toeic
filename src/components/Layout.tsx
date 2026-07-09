@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { BookMarked, GraduationCap, Menu, X } from 'lucide-react'
+import { BookMarked, GraduationCap, Headphones, Menu, X } from 'lucide-react'
 import { ProgressBar } from './ProgressBar'
 import { Sidebar } from './sidebar/Sidebar'
 import { UserMenu } from '../auth/UserMenu'
@@ -15,6 +15,7 @@ interface LayoutProps {
   selectedDay: number
   onSelectDay: (day: number) => void
   onOpenVocab: () => void
+  onOpenDictation: () => void
   children: ReactNode
 }
 
@@ -26,6 +27,7 @@ export function Layout({
   selectedDay,
   onSelectDay,
   onOpenVocab,
+  onOpenDictation,
   children,
 }: LayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -63,7 +65,15 @@ export function Layout({
             </div>
           </div>
 
-          <div className="ml-auto hidden items-center gap-3 md:flex">
+          <div className="ml-auto hidden items-center gap-2 md:flex">
+            <button
+              type="button"
+              onClick={onOpenDictation}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
+            >
+              <Headphones className="h-4 w-4" />
+              Chép chính tả
+            </button>
             <button
               type="button"
               onClick={onOpenVocab}
@@ -72,7 +82,7 @@ export function Layout({
               <BookMarked className="h-4 w-4" />
               Ôn từ vựng
             </button>
-            <div className="w-48">
+            <div className="w-40">
               <ProgressBar
                 value={progress.completionPct}
                 doneCount={progress.doneCount}
@@ -83,8 +93,16 @@ export function Layout({
             <UserMenu />
           </div>
 
-          {/* Vocab + user menu (mobile — beside the hamburger row) */}
+          {/* Dictation + vocab + user menu (mobile) */}
           <div className="ml-auto flex items-center gap-1.5 md:hidden">
+            <button
+              type="button"
+              onClick={onOpenDictation}
+              aria-label="Nghe chép chính tả"
+              className="grid h-9 w-9 place-items-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
+            >
+              <Headphones className="h-4 w-4" />
+            </button>
             <button
               type="button"
               onClick={onOpenVocab}

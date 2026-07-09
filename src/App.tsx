@@ -3,11 +3,12 @@ import { Layout } from './components/Layout'
 import { DayView } from './components/DayView'
 import { MergeProgressPrompt } from './components/MergeProgressPrompt'
 import { VocabReviewPage } from './components/vocab/VocabReviewPage'
+import { DictationPage } from './components/dictation/DictationPage'
 import { useDays } from './hooks/useDays'
 import { useProgress } from './hooks/useProgress'
 import { TOTAL_DAYS } from './data/constants'
 
-type View = 'course' | 'vocab'
+type View = 'course' | 'vocab' | 'dictation'
 
 function clampDay(value: number): number {
   if (Number.isNaN(value)) return 1
@@ -22,9 +23,8 @@ function readDayFromUrl(): number {
 
 function readViewFromUrl(): View {
   if (typeof window === 'undefined') return 'course'
-  return new URLSearchParams(window.location.search).get('view') === 'vocab'
-    ? 'vocab'
-    : 'course'
+  const v = new URLSearchParams(window.location.search).get('view')
+  return v === 'vocab' || v === 'dictation' ? v : 'course'
 }
 
 export default function App() {
@@ -49,8 +49,8 @@ export default function App() {
     setView(next)
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href)
-      if (next === 'vocab') url.searchParams.set('view', 'vocab')
-      else url.searchParams.delete('view')
+      if (next === 'course') url.searchParams.delete('view')
+      else url.searchParams.set('view', next)
       window.history.pushState({ view: next }, '', url)
     }
   }, [])
@@ -67,6 +67,9 @@ export default function App() {
   if (view === 'vocab') {
     return <VocabReviewPage onBack={() => selectView('course')} />
   }
+  if (view === 'dictation') {
+    return <DictationPage onBack={() => selectView('course')} />
+  }
 
   return (
     <>
@@ -79,6 +82,7 @@ export default function App() {
         selectedDay={selectedDay}
         onSelectDay={selectDay}
         onOpenVocab={() => selectView('vocab')}
+        onOpenDictation={() => selectView('dictation')}
       >
         <DayView
           key={selectedDay}
