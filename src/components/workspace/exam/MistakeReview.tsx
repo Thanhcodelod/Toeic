@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { cn } from '../../../lib/cn'
 import { fetchExamKeyForDay, reviewMistakes } from '../../../lib/api'
+import { getDayAnswers } from '../../../lib/answersApi'
 import type { ExamAnswerKey } from '../../../lib/api'
 import type { OptionKey } from '../../../data/types'
 
@@ -33,16 +34,6 @@ interface MistakeReviewProps {
   onSelectDay: (day: number) => void
 }
 
-function readExamAnswers(day: number): Record<string, OptionKey> {
-  if (typeof window === 'undefined') return {}
-  try {
-    const raw = window.localStorage.getItem(`toeic90:exam:${day}:answers`)
-    return raw ? (JSON.parse(raw) as Record<string, OptionKey>) : {}
-  } catch {
-    return {}
-  }
-}
-
 export function MistakeReview({ reviewOfDay, onSelectDay }: MistakeReviewProps) {
   const [key, setKey] = useState<ExamAnswerKey | null>(null)
   const [loading, setLoading] = useState(true)
@@ -50,18 +41,21 @@ export function MistakeReview({ reviewOfDay, onSelectDay }: MistakeReviewProps) 
   const [ai, setAi] = useState<AiSummary | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [answers, setAnswers] = useState<Record<number, OptionKey>>({})
 
-  const answers = useMemo(() => readExamAnswers(reviewOfDay), [reviewOfDay])
-
+  // Both the answer key and the learner's answers come from the DATABASE.
   useEffect(() => {
     let ignore = false
     setLoading(true)
-    fetchExamKeyForDay(reviewOfDay)
-      .then((k) => {
-        if (!ignore) {
-          setKey(k)
-          setLoading(false)
-        }
+    Promise.all([
+      fetchExamKeyForDay(reviewOfDay),
+      getDayAnswers(reviewOfDay, 'exam'),
+    ])
+      .then(([k, a]) => {
+        if (ignore) return
+        setKey(k)
+        setAnswers(a)
+        setLoading(false)
       })
       .catch((e: unknown) => {
         if (!ignore) {
@@ -80,7 +74,7 @@ export function MistakeReview({ reviewOfDay, onSelectDay }: MistakeReviewProps) 
   const wrong = useMemo(() => {
     if (!key) return []
     return key.answers.filter(
-      (q) => answers[String(q.qNumber)] && answers[String(q.qNumber)] !== q.correct,
+      (q) => answers[q.qNumber] && answers[q.qNumber] !== q.correct,
     )
   }, [key, answers])
 

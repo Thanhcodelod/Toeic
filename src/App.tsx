@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Layout } from './components/Layout'
 import { DayView } from './components/DayView'
-import { MergeProgressPrompt } from './components/MergeProgressPrompt'
 import { VocabReviewPage } from './components/vocab/VocabReviewPage'
 import { DictationPage } from './components/dictation/DictationPage'
+import { purgeLegacyLocalStorage } from './lib/answersApi'
 import { useDays } from './hooks/useDays'
 import { useProgress } from './hooks/useProgress'
 import { TOTAL_DAYS } from './data/constants'
@@ -64,6 +64,11 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPop)
   }, [])
 
+  // Progress now lives only in the database — clear any legacy browser storage.
+  useEffect(() => {
+    purgeLegacyLocalStorage()
+  }, [])
+
   if (view === 'vocab') {
     return <VocabReviewPage onBack={() => selectView('course')} />
   }
@@ -73,7 +78,6 @@ export default function App() {
 
   return (
     <>
-      <MergeProgressPrompt progress={progress} />
       <Layout
         days={days}
         daysLoading={daysLoading}

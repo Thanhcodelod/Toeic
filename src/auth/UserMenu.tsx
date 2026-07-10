@@ -1,13 +1,26 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, LogOut, User as UserIcon } from 'lucide-react'
 import { cn } from '../lib/cn'
+import { getProfile, type Profile } from '../lib/answersApi'
 import { useAuth } from './AuthContext'
 
 /** Header account menu: shows the email + a "Đăng xuất" action. */
 export function UserMenu({ compact = false }: { compact?: boolean }) {
   const { user, signOut } = useAuth()
   const [open, setOpen] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+
+  // Account row lives in the `profiles` table (created by a DB trigger on signup).
+  useEffect(() => {
+    let ignore = false
+    getProfile()
+      .then((p) => !ignore && setProfile(p))
+      .catch(() => {})
+    return () => {
+      ignore = true
+    }
+  }, [user?.id])
 
   useEffect(() => {
     if (!open) return
@@ -18,7 +31,8 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
     return () => document.removeEventListener('mousedown', onDown)
   }, [open])
 
-  const email = user?.email ?? 'Tài khoản'
+  const email = profile?.email ?? user?.email ?? 'Tài khoản'
+  const name = profile?.displayName || email
 
   const handleSignOut = () => {
     setOpen(false)
@@ -41,7 +55,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
         <UserIcon className="h-4 w-4 shrink-0" />
         {!compact && (
           <>
-            <span className="max-w-[10rem] truncate">{email}</span>
+            <span className="max-w-[10rem] truncate">{name}</span>
             <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
           </>
         )}
@@ -52,8 +66,13 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
           role="menu"
           className="absolute right-0 z-30 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1 shadow-card-lg"
         >
-          <div className="truncate px-3 py-2 text-xs text-slate-400">
-            {email}
+          <div className="px-3 py-2">
+            {profile?.displayName && (
+              <p className="truncate text-sm font-semibold text-slate-700">
+                {profile.displayName}
+              </p>
+            )}
+            <p className="truncate text-xs text-slate-400">{email}</p>
           </div>
           <button
             type="button"

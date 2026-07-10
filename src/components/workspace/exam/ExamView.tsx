@@ -3,13 +3,20 @@ import {
   Clock,
   Headphones,
   ListChecks,
+  Loader2,
   Minimize2,
   PlayCircle,
   Send,
 } from 'lucide-react'
 import { cn } from '../../../lib/cn'
-import { useCountdown } from '../../../hooks/useCountdown'
-import { useLocalStorage } from '../../../hooks/useLocalStorage'
+import { useCountdown, type CountdownState } from '../../../hooks/useCountdown'
+import {
+  clearDayAnswers,
+  getDayAnswers,
+  getTestSession,
+  saveAnswer,
+  saveTestSession,
+} from '../../../lib/answersApi'
 import { AudioPlayer } from '../practice/AudioPlayer'
 import { CountdownTimer } from '../practice/CountdownTimer'
 import { ExamAnswerGrid } from './ExamAnswerGrid'
@@ -68,12 +75,49 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
         ? content.listeningMinutes
         : content.readingMinutes
 
+  const totalMinutesRef = useRef(totalMinutes)
+  totalMinutesRef.current = totalMinutes
+
   const [phase, setPhase] = useState<'intro' | 'doing' | 'submitted'>('intro')
   const [activeKey, setActiveKey] = useState<SectionKey>(sections[0].key)
-  const [answers, setAnswers] = useLocalStorage<Record<number, OptionKey>>(
-    `toeic90:exam:${dayNumber}:answers`,
-    {},
-  )
+  const [answers, setAnswers] = useState<Record<number, OptionKey>>({})
+  const [hydrating, setHydrating] = useState(true)
+  const [initialTimer, setInitialTimer] = useState<CountdownState | null>(null)
+
+  // Answers + timer come from the DATABASE (nothing is kept in the browser).
+  useEffect(() => {
+    let ignore = false
+    setHydrating(true)
+    Promise.all([
+      getDayAnswers(dayNumber, 'exam'),
+      getTestSession(dayNumber, 'exam'),
+    ])
+      .then(([rows, session]) => {
+        if (ignore) return
+        const next: Record<number, OptionKey> = {}
+        for (const [ordStr, chosen] of Object.entries(rows)) next[Number(ordStr)] = chosen
+        setAnswers(next)
+        const secs = totalMinutesRef.current * 60
+        setInitialTimer(
+          session
+            ? {
+                endTime: session.endTime ? Date.parse(session.endTime) : null,
+                secondsLeft: session.secondsLeft ?? secs,
+                running: session.running,
+              }
+            : { endTime: null, secondsLeft: secs, running: false },
+        )
+        setHydrating(false)
+      })
+      .catch((e: unknown) => {
+        if (ignore) return
+        console.warn('Tai bai lam that bai', e)
+        setHydrating(false)
+      })
+    return () => {
+      ignore = true
+    }
+  }, [dayNumber])
 
   // --- Fullscreen wiring -----------------------------------------------------
   const containerRef = useRef<HTMLDivElement>(null)
@@ -101,9 +145,22 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
   const answeredCount = doneItems.filter((it) => answers[it.qNumber]).length
 
   const submitRef = useRef<() => void>(() => {})
+  const persistTimer = useCallback(
+    (st: CountdownState) => {
+      void saveTestSession(dayNumber, 'exam', {
+        endTime: st.endTime ? new Date(st.endTime) : null,
+        secondsLeft: st.secondsLeft,
+        running: st.running,
+        submitted: false,
+      }).catch((e) => console.warn('Luu phien lam bai that bai', e))
+    },
+    [dayNumber],
+  )
+
   const { secondsLeft, running, formatted, start, pause, reset } = useCountdown({
     durationSeconds: totalMinutes * 60,
-    storageKey: `toeic90:exam:${dayNumber}:timer`,
+    initial: initialTimer,
+    onPersist: persistTimer,
     onExpire: () => submitRef.current(),
   })
 
@@ -125,7 +182,10 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
       if (p === 'submitted') return p
       endingRef.current = true
       pause()
-      progress.recordPractice(dayNumber, scorePct, {})
+      progress.recordPractice(dayNumber, scorePct)
+      void saveTestSession(dayNumber, 'exam', {
+        endTime: null, secondsLeft: 0, running: false, submitted: true,
+      }).catch(() => {})
       return 'submitted'
     })
     leaveFullscreen()
@@ -199,6 +259,7 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
 
   const handleRetry = () => {
     setAnswers({})
+    void clearDayAnswers(dayNumber, 'exam').catch(() => {})
     reset()
     setActiveKey(sections[0].key)
     setPhase('intro')
@@ -207,6 +268,9 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
 
   const handleSelect = (qNumber: number, key: OptionKey) => {
     setAnswers((prev) => ({ ...prev, [qNumber]: key }))
+    saveAnswer(dayNumber, 'exam', qNumber, key).catch((e) =>
+      console.warn('Luu dap an that bai', e),
+    )
   }
 
   // ---- Views ----------------------------------------------------------------
@@ -379,9 +443,14 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
         isFullscreen && 'h-screen w-screen overflow-auto bg-slate-50 p-4 sm:p-6',
       )}
     >
-      {phase === 'intro' && intro}
-      {phase === 'doing' && doing}
-      {phase === 'submitted' && (
+      {hydrating ? (
+        <div className="flex items-center justify-center gap-2 py-24 text-slate-400">
+          <Loader2 className="h-5 w-5 animate-spin" /> Dang tai bai lam...
+        </div>
+      ) : null}
+      {!hydrating && phase === 'intro' && intro}
+      {!hydrating && phase === 'doing' && doing}
+      {!hydrating && phase === 'submitted' && (
         <ExamResult content={content} answers={answers} onRetry={handleRetry} />
       )}
     </div>

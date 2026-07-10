@@ -26,6 +26,7 @@ import {
   type DictationItem,
   type DictationLine,
 } from '../../lib/dictationApi'
+import { saveDictationLine } from '../../lib/answersApi'
 
 interface Props {
   testTitle: string
@@ -82,6 +83,10 @@ export function DictationExercise({ testTitle, item, lines, onBack, onCompleted 
       ? wholeOk ? 1 : 0
       : blanks.filter((i) => correctness(i)).length
     scores.current[idx] = { correct, total }
+    // persist THIS single line right away
+    saveDictationLine(item.id, level, line.ord, correct, total).catch((e) =>
+      console.warn('Luu dong chep chinh ta that bai', e),
+    )
   }
 
   const reveal = () => {
@@ -90,7 +95,9 @@ export function DictationExercise({ testTitle, item, lines, onBack, onCompleted 
     if (isWhole) setSentence(line.text)
     else setInputs(Object.fromEntries(blanks.map((i) => [i, tokens[i].text])))
     // a revealed line scores 0
-    scores.current[idx] = { correct: 0, total: isWhole ? 1 : blanks.length }
+    const total = isWhole ? 1 : blanks.length
+    scores.current[idx] = { correct: 0, total }
+    saveDictationLine(item.id, level, line.ord, 0, total).catch(() => {})
   }
 
   const finish = async () => {

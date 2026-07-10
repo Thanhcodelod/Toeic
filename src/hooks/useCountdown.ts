@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-interface CountdownState {
+export interface CountdownState {
   /** Absolute epoch ms when the timer hits 0 (null when not running). */
   endTime: number | null
   secondsLeft: number
@@ -9,8 +9,11 @@ interface CountdownState {
 
 export interface UseCountdownOptions {
   durationSeconds: number
-  /** Persist to Local Storage so a refresh mid-test resumes. */
-  storageKey?: string
+  /** Hydrate from the server (applied once, when it first arrives). */
+  initial?: CountdownState | null
+  /** Called on meaningful transitions only (start / pause / reset / expire) —
+   *  never on every tick, so persistence stays cheap. */
+  onPersist?: (state: CountdownState) => void
   /** Fired once when the timer reaches 0 (e.g. auto-submit). */
   onExpire?: () => void
   autoStart?: boolean
@@ -34,15 +37,14 @@ function format(totalSeconds: number): string {
 }
 
 /**
- * Drift-proof countdown.
- *
- * Remaining time is always derived from an absolute `endTime`, so background-tab
- * throttling and refreshes never desync it. State can be persisted so a page
- * reload mid-test resumes exactly where it left off.
+ * Drift-proof countdown. Remaining time is always derived from an absolute
+ * `endTime`, so background-tab throttling and refreshes never desync it.
+ * State is persisted by the caller (to the DATABASE — never localStorage).
  */
 export function useCountdown({
   durationSeconds,
-  storageKey,
+  initial,
+  onPersist,
   onExpire,
   autoStart = false,
 }: UseCountdownOptions): UseCountdown {
@@ -50,55 +52,40 @@ export function useCountdown({
   useEffect(() => {
     onExpireRef.current = onExpire
   }, [onExpire])
+  const onPersistRef = useRef(onPersist)
+  useEffect(() => {
+    onPersistRef.current = onPersist
+  }, [onPersist])
 
   const firedRef = useRef(false)
+  const hydratedRef = useRef(false)
 
-  const [state, setState] = useState<CountdownState>(() => {
-    if (storageKey && typeof window !== 'undefined') {
-      try {
-        const raw = window.localStorage.getItem(storageKey)
-        if (raw) {
-          const saved = JSON.parse(raw) as CountdownState
-          if (saved.running && saved.endTime) {
-            const left = Math.max(
-              0,
-              Math.round((saved.endTime - Date.now()) / 1000),
-            )
-            return { endTime: left > 0 ? saved.endTime : null, secondsLeft: left, running: left > 0 }
-          }
-          return {
-            endTime: null,
-            secondsLeft: saved.secondsLeft ?? durationSeconds,
-            running: false,
-          }
-        }
-      } catch {
-        /* fall through to defaults */
-      }
-    }
-    return {
-      endTime: autoStart ? Date.now() + durationSeconds * 1000 : null,
-      secondsLeft: durationSeconds,
-      running: autoStart,
-    }
+  const [state, setState] = useState<CountdownState>({
+    endTime: autoStart ? Date.now() + durationSeconds * 1000 : null,
+    secondsLeft: durationSeconds,
+    running: autoStart,
   })
 
-  // Persist on every change.
+  // Hydrate once from the server-provided state.
   useEffect(() => {
-    if (!storageKey || typeof window === 'undefined') return
-    window.localStorage.setItem(storageKey, JSON.stringify(state))
-  }, [state, storageKey])
+    if (hydratedRef.current || !initial) return
+    hydratedRef.current = true
+    if (initial.running && initial.endTime) {
+      const left = Math.max(0, Math.round((initial.endTime - Date.now()) / 1000))
+      setState({ endTime: left > 0 ? initial.endTime : null, secondsLeft: left, running: left > 0 })
+    } else {
+      setState({ endTime: null, secondsLeft: initial.secondsLeft ?? durationSeconds, running: false })
+    }
+  }, [initial, durationSeconds])
 
-  // Ticking — recompute from the absolute endTime each tick.
+  // Ticking — recompute from the absolute endTime each tick (no persistence here).
   useEffect(() => {
     if (!state.running) return
     const id = window.setInterval(() => {
       setState((prev) => {
         if (!prev.running || prev.endTime == null) return prev
         const left = Math.max(0, Math.round((prev.endTime - Date.now()) / 1000))
-        if (left <= 0) {
-          return { endTime: null, secondsLeft: 0, running: false }
-        }
+        if (left <= 0) return { endTime: null, secondsLeft: 0, running: false }
         return { ...prev, secondsLeft: left }
       })
     }, 500)
@@ -130,6 +117,7 @@ export function useCountdown({
     }
     if (!firedRef.current) {
       firedRef.current = true
+      onPersistRef.current?.({ endTime: null, secondsLeft: 0, running: false })
       onExpireRef.current?.()
     }
   }, [state.secondsLeft])
@@ -138,21 +126,29 @@ export function useCountdown({
     firedRef.current = false
     setState((prev) => {
       const seconds = prev.secondsLeft > 0 ? prev.secondsLeft : durationSeconds
-      return {
+      const next: CountdownState = {
         endTime: Date.now() + seconds * 1000,
         secondsLeft: seconds,
         running: true,
       }
+      onPersistRef.current?.(next)
+      return next
     })
   }, [durationSeconds])
 
   const pause = useCallback(() => {
-    setState((prev) => ({ ...prev, running: false, endTime: null }))
+    setState((prev) => {
+      const next: CountdownState = { ...prev, running: false, endTime: null }
+      onPersistRef.current?.(next)
+      return next
+    })
   }, [])
 
   const reset = useCallback(() => {
     firedRef.current = false
-    setState({ endTime: null, secondsLeft: durationSeconds, running: false })
+    const next: CountdownState = { endTime: null, secondsLeft: durationSeconds, running: false }
+    onPersistRef.current?.(next)
+    setState(next)
   }, [durationSeconds])
 
   return {

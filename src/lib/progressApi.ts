@@ -10,14 +10,12 @@ export interface DayProgressRow {
   day_number: number
   status: 'in-progress' | 'done'
   best_score_pct: number | null
-  answers: Record<string, OptionKey> | null
 }
 
 function mapRow(r: DayProgressRow): ProgressMap[number] {
   return {
     status: r.status,
     bestScorePct: r.best_score_pct ?? undefined,
-    answers: r.answers && Object.keys(r.answers).length ? r.answers : undefined,
   }
 }
 
@@ -25,7 +23,7 @@ function mapRow(r: DayProgressRow): ProgressMap[number] {
 export async function fetchUserProgress(): Promise<ProgressMap> {
   const { data, error } = await getSupabase()
     .from('user_day_progress')
-    .select('day_number, status, best_score_pct, answers')
+    .select('day_number, status, best_score_pct')
   if (error) throw new Error(error.message)
   const map: ProgressMap = {}
   for (const r of (data as DayProgressRow[]) ?? []) map[r.day_number] = mapRow(r)
@@ -59,31 +57,4 @@ export const apiRecordPractice = (
     p_answers: answers,
   })
 
-/** Delete all of the current user's progress rows. */
-export async function apiResetAll(userId: string): Promise<void> {
-  const { error } = await getSupabase()
-    .from('user_day_progress')
-    .delete()
-    .eq('user_id', userId)
-  if (error) throw new Error(error.message)
-}
 
-export interface MergeRow {
-  day_number: number
-  status: 'in-progress' | 'done'
-  best_score_pct: number | null
-  answers: Record<string, OptionKey>
-}
-
-/** Bulk upsert for the one-time local→server merge on first login. */
-export async function apiUpsertMerged(
-  userId: string,
-  rows: MergeRow[],
-): Promise<void> {
-  if (rows.length === 0) return
-  const payload = rows.map((r) => ({ ...r, user_id: userId }))
-  const { error } = await getSupabase()
-    .from('user_day_progress')
-    .upsert(payload, { onConflict: 'user_id,day_number' })
-  if (error) throw new Error(error.message)
-}

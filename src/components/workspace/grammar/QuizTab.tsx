@@ -1,87 +1,92 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Award, RotateCcw } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Award, Loader2, RotateCcw } from 'lucide-react'
 import { QuizCard } from './QuizCard'
+import { clearDayAnswers, getDayAnswers, saveAnswer } from '../../../lib/answersApi'
 import type { OptionKey, QuizQuestion } from '../../../data/types'
 
 interface QuizTabProps {
   dayNumber: number
   quiz: QuizQuestion[]
-  /** Answers already saved to the account (restored on login / other devices). */
-  savedAnswers?: Record<string, OptionKey>
-  /** Records the completed quiz (score + answers) to the account. */
-  onComplete: (scorePct: number, answers: Record<string, OptionKey>) => void
+  /** Records the completed quiz score on the account. */
+  onComplete: (scorePct: number) => void
 }
 
-function readDraft(key: string): Record<string, OptionKey> {
-  if (typeof window === 'undefined') return {}
-  try {
-    const raw = window.localStorage.getItem(key)
-    return raw ? (JSON.parse(raw) as Record<string, OptionKey>) : {}
-  } catch {
-    return {}
-  }
-}
+export function QuizTab({ dayNumber, quiz, onComplete }: QuizTabProps) {
+  // answers are keyed by question id for the UI; persisted by question `ord`.
+  const [answers, setAnswers] = useState<Record<string, OptionKey>>({})
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-export function QuizTab({
-  dayNumber,
-  quiz,
-  savedAnswers,
-  onComplete,
-}: QuizTabProps) {
-  const draftKey = `toeic90:grammar:${dayNumber}:answers`
+  const byOrd = useMemo(() => {
+    const m = new Map<number, QuizQuestion>()
+    for (const q of quiz) m.set(q.ord, q)
+    return m
+  }, [quiz])
 
-  // Seed from the on-device draft first (instant), else the account's saved answers.
-  const [answers, setAnswers] = useState<Record<string, OptionKey>>(() => {
-    const draft = readDraft(draftKey)
-    return Object.keys(draft).length ? draft : (savedAnswers ?? {})
-  })
-
-  // Seed from account answers when they arrive (async) and nothing is entered yet.
-  const seededRef = useRef(false)
+  // Load every previously-saved answer for this day from the database.
   useEffect(() => {
-    if (seededRef.current) return
-    if (
-      savedAnswers &&
-      Object.keys(savedAnswers).length > 0 &&
-      Object.keys(answers).length === 0
-    ) {
-      seededRef.current = true
-      setAnswers(savedAnswers)
+    let ignore = false
+    setLoading(true)
+    getDayAnswers(dayNumber, 'grammar')
+      .then((rows) => {
+        if (ignore) return
+        const next: Record<string, OptionKey> = {}
+        for (const [ordStr, chosen] of Object.entries(rows)) {
+          const q = byOrd.get(Number(ordStr))
+          if (q) next[q.id] = chosen
+        }
+        setAnswers(next)
+        setLoading(false)
+      })
+      .catch((e: unknown) => {
+        if (ignore) return
+        setError((e as Error)?.message ?? 'Lỗi tải đáp án đã lưu')
+        setLoading(false)
+      })
+    return () => {
+      ignore = true
     }
-  }, [savedAnswers, answers])
-
-  // Persist the draft on this device (survives reload / logout).
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(draftKey, JSON.stringify(answers))
-    } catch {
-      /* ignore quota / private mode */
-    }
-  }, [draftKey, answers])
+  }, [dayNumber, byOrd])
 
   const answeredCount = Object.keys(answers).length
   const correctCount = useMemo(
-    () =>
-      quiz.reduce((sum, q) => (answers[q.id] === q.correct ? sum + 1 : sum), 0),
+    () => quiz.reduce((sum, q) => (answers[q.id] === q.correct ? sum + 1 : sum), 0),
     [answers, quiz],
   )
   const allAnswered = answeredCount === quiz.length
+  const scorePct = quiz.length > 0 ? Math.round((correctCount / quiz.length) * 100) : 0
 
-  const handleSelect = (id: string, key: OptionKey) => {
-    seededRef.current = true // user is answering — don't re-seed over their input
-    setAnswers((prev) => ({ ...prev, [id]: key }))
+  const handleSelect = (q: QuizQuestion, key: OptionKey) => {
+    setAnswers((prev) => ({ ...prev, [q.id]: key }))
+    // persist this single answer immediately (server grades it)
+    saveAnswer(dayNumber, 'grammar', q.ord, key).catch((e) =>
+      console.warn('Lưu đáp án thất bại', e),
+    )
   }
 
   const reset = () => {
-    seededRef.current = true
     setAnswers({})
+    clearDayAnswers(dayNumber, 'grammar').catch((e) =>
+      console.warn('Xoá đáp án thất bại', e),
+    )
   }
 
-  const scorePct =
-    quiz.length > 0 ? Math.round((correctCount / quiz.length) * 100) : 0
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-20 text-slate-400">
+        <Loader2 className="h-5 w-5 animate-spin" /> Đang tải đáp án đã lưu…
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4">
+      {error && (
+        <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">
+          {error}
+        </p>
+      )}
+
       {/* Progress summary */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
         <div className="text-sm text-slate-600">
@@ -111,7 +116,7 @@ export function QuizTab({
           question={question}
           index={index}
           selected={answers[question.id]}
-          onSelect={(key) => handleSelect(question.id, key)}
+          onSelect={(key) => handleSelect(question, key)}
         />
       ))}
 
@@ -133,7 +138,7 @@ export function QuizTab({
           </div>
           <button
             type="button"
-            onClick={() => onComplete(scorePct, answers)}
+            onClick={() => onComplete(scorePct)}
             className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-emerald-700"
           >
             Đánh dấu hoàn thành ngày này

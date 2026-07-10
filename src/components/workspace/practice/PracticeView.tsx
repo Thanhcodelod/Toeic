@@ -1,7 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { ListChecks, Send } from 'lucide-react'
-import { useCountdown } from '../../../hooks/useCountdown'
-import { useLocalStorage } from '../../../hooks/useLocalStorage'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ListChecks, Loader2, Send } from 'lucide-react'
+import { useCountdown, type CountdownState } from '../../../hooks/useCountdown'
+import {
+  clearDayAnswers,
+  getDayAnswers,
+  getTestSession,
+  saveAnswer,
+  saveTestSession,
+} from '../../../lib/answersApi'
 import { cn } from '../../../lib/cn'
 import { AudioPlayer } from './AudioPlayer'
 import { CountdownTimer } from './CountdownTimer'
@@ -44,11 +50,54 @@ export function PracticeView({
     }
   })
 
-  const [answers, setAnswers] = useLocalStorage<Record<string, OptionKey>>(
-    `toeic90:practice:${dayNumber}:answers`,
-    {},
-  )
+  const [answers, setAnswers] = useState<Record<string, OptionKey>>({})
+  const [hydrating, setHydrating] = useState(true)
+  const [initialTimer, setInitialTimer] = useState<CountdownState | null>(null)
   const [submitted, setSubmitted] = useState(false)
+
+  const byOrd = useMemo(() => {
+    const m = new Map<number, (typeof questions)[number]>()
+    for (const q of questions) m.set(q.ord, q)
+    return m
+  }, [questions])
+
+  // Everything (answers + timer) is restored from the DATABASE — no localStorage.
+  useEffect(() => {
+    let ignore = false
+    setHydrating(true)
+    Promise.all([
+      getDayAnswers(dayNumber, 'practice'),
+      getTestSession(dayNumber, 'practice'),
+    ])
+      .then(([rows, session]) => {
+        if (ignore) return
+        const next: Record<string, OptionKey> = {}
+        for (const [ordStr, chosen] of Object.entries(rows)) {
+          const q = byOrd.get(Number(ordStr))
+          if (q) next[q.id] = chosen
+        }
+        setAnswers(next)
+        setInitialTimer(
+          session
+            ? {
+                endTime: session.endTime ? Date.parse(session.endTime) : null,
+                secondsLeft: session.secondsLeft ?? content.durationMinutes * 60,
+                running: session.running,
+              }
+            : { endTime: null, secondsLeft: content.durationMinutes * 60, running: false },
+        )
+        if (session?.submitted) setSubmitted(true)
+        setHydrating(false)
+      })
+      .catch((e: unknown) => {
+        if (ignore) return
+        console.warn('Tải bài làm thất bại', e)
+        setHydrating(false)
+      })
+    return () => {
+      ignore = true
+    }
+  }, [dayNumber, byOrd, content.durationMinutes])
 
   const correctCount = questions.reduce(
     (sum, q) => (answers[q.id] === q.correct ? sum + 1 : sum),
@@ -58,9 +107,22 @@ export function PracticeView({
   const answeredCount = Object.keys(answers).length
 
   const submitRef = useRef<() => void>(() => {})
+  const persistTimer = useCallback(
+    (st: CountdownState) => {
+      void saveTestSession(dayNumber, 'practice', {
+        endTime: st.endTime ? new Date(st.endTime) : null,
+        secondsLeft: st.secondsLeft,
+        running: st.running,
+        submitted: false,
+      }).catch((e) => console.warn('Lưu phiên làm bài thất bại', e))
+    },
+    [dayNumber],
+  )
+
   const { secondsLeft, running, formatted, start, pause, reset } = useCountdown({
     durationSeconds: totalSeconds,
-    storageKey: `toeic90:practice:${dayNumber}:timer`,
+    initial: initialTimer,
+    onPersist: persistTimer,
     onExpire: () => submitRef.current(),
   })
 
@@ -68,7 +130,13 @@ export function PracticeView({
     setSubmitted((already) => {
       if (already) return already
       pause()
-      progress.recordPractice(dayNumber, scorePct, answers)
+      progress.recordPractice(dayNumber, scorePct)
+      void saveTestSession(dayNumber, 'practice', {
+        endTime: null,
+        secondsLeft: 0,
+        running: false,
+        submitted: true,
+      }).catch(() => {})
       window.scrollTo({ top: 0, behavior: 'smooth' })
       return true
     })
@@ -102,13 +170,25 @@ export function PracticeView({
   const handleRetry = () => {
     setSubmitted(false)
     setAnswers({})
+    void clearDayAnswers(dayNumber, 'practice').catch(() => {})
     reset()
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleSelect = (id: string, key: OptionKey) => {
+  const handleSelect = (id: string, ord: number, key: OptionKey) => {
     if (submitted) return
     setAnswers((prev) => ({ ...prev, [id]: key }))
+    saveAnswer(dayNumber, 'practice', ord, key).catch((e) =>
+      console.warn('Lưu đáp án thất bại', e),
+    )
+  }
+
+  if (hydrating) {
+    return (
+      <div className="flex items-center justify-center gap-2 py-24 text-slate-400">
+        <Loader2 className="h-5 w-5 animate-spin" /> Đang tải bài làm của bạn…
+      </div>
+    )
   }
 
   if (submitted) {
@@ -166,7 +246,7 @@ export function PracticeView({
                   question={q}
                   index={index}
                   selected={answers[q.id]}
-                  onSelect={(key) => handleSelect(q.id, key)}
+                  onSelect={(key) => handleSelect(q.id, q.ord, key)}
                   hideOptionText={isAudioOnlyListening(q, content.listening)}
                 />
               ))}

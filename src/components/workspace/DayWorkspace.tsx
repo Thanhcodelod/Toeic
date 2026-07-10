@@ -63,10 +63,7 @@ export function DayWorkspace({ day, progress, onSelectDay }: DayWorkspaceProps) 
         <QuizTab
           dayNumber={day.day}
           quiz={day.grammar.quiz}
-          savedAnswers={progress.getSavedAnswers(day.day)}
-          onComplete={(scorePct, answers) =>
-            progress.recordPractice(day.day, scorePct, answers)
-          }
+          onComplete={(scorePct) => progress.recordPractice(day.day, scorePct)}
         />
       ),
     })

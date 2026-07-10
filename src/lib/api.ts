@@ -29,6 +29,7 @@ interface DayRow {
 
 interface QuizRow {
   id: number
+  ord: number
   question_text: string
   option_a: string | null
   option_b: string | null
@@ -58,6 +59,7 @@ interface CardRow {
 function mapQuiz(r: QuizRow): QuizQuestion {
   return {
     id: String(r.id),
+    ord: r.ord,
     question: r.question_text,
     options: {
       A: r.option_a ?? '',
@@ -151,7 +153,7 @@ export async function getDayDetail(dayNumber: number): Promise<Day> {
     sb
       .from('quiz_questions')
       .select(
-        'id, question_text, option_a, option_b, option_c, option_d, correct_option, explanation_text, translation, passage, num_options, image_url',
+        'id, ord, question_text, option_a, option_b, option_c, option_d, correct_option, explanation_text, translation, passage, num_options, image_url',
       )
       .eq('day_id', dayRow.id)
       .order('ord', { ascending: true }),

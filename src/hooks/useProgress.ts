@@ -1,58 +1,37 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { TOTAL_DAYS } from '../data/constants'
+import { resetAllProgress } from '../lib/answersApi'
 import {
   apiMarkDone,
   apiMarkInProgress,
   apiRecordPractice,
-  apiResetAll,
   apiToggleDone,
-  apiUpsertMerged,
   fetchUserProgress,
   type DayProgressRow,
 } from '../lib/progressApi'
-import {
-  clearLegacy,
-  clearLocalDrafts,
-  mergeMaps,
-  readCache,
-  readLegacy,
-  writeCache,
-} from '../lib/progressLocal'
-import type { DayStatus, OptionKey, ProgressMap } from '../data/types'
+import type { DayStatus, ProgressMap } from '../data/types'
 
 export interface UseProgress {
   progress: ProgressMap
-  /** True during the initial server fetch for the current user. */
+  /** True during the initial server fetch. Nothing is cached in the browser. */
   loading: boolean
-  /** Last load/sync error (optional to surface). */
   error: string | null
   getStatus: (dayNumber: number) => DayStatus
   getBestScore: (dayNumber: number) => number | undefined
-  getSavedAnswers: (dayNumber: number) => Record<string, OptionKey> | undefined
   markInProgress: (dayNumber: number) => void
   markDone: (dayNumber: number) => void
   toggleDone: (dayNumber: number) => void
-  recordPractice: (
-    dayNumber: number,
-    scorePct: number,
-    answers: Record<string, OptionKey>,
-  ) => void
+  recordPractice: (dayNumber: number, scorePct: number) => void
   resetAll: () => void
   doneCount: number
   completionPct: number
-  /** Legacy device-local progress detected → offer a one-time merge. */
-  legacyMergeAvailable: boolean
-  applyLegacyMerge: () => void
-  dismissLegacyMerge: () => void
 }
 
 function rowToProgress(row: DayProgressRow): ProgressMap[number] {
   return {
     status: row.status,
     bestScorePct: row.best_score_pct ?? undefined,
-    answers:
-      row.answers && Object.keys(row.answers).length ? row.answers : undefined,
   }
 }
 
@@ -60,24 +39,16 @@ export function useProgress(): UseProgress {
   const { user } = useAuth()
   const userId = user?.id ?? null
 
-  // Seed synchronously from the per-user cache so the first paint isn't 0%.
-  const [progress, setProgress] = useState<ProgressMap>(() => readCache(userId))
+  const [progress, setProgress] = useState<ProgressMap>({})
   const [loading, setLoading] = useState<boolean>(Boolean(userId))
   const [error, setError] = useState<string | null>(null)
-  const [legacyMergeAvailable, setLegacyMergeAvailable] = useState(false)
 
-  // Latest progress for reads outside the setState updater (merge, optimistic).
   const progressRef = useRef(progress)
   progressRef.current = progress
   // Serialize writes per day so out-of-order responses can't desync a day.
   const writeChain = useRef<Map<number, Promise<unknown>>>(new Map())
 
-  // Persist every change to the per-user cache.
-  useEffect(() => {
-    if (userId) writeCache(userId, progress)
-  }, [userId, progress])
-
-  // Load the authoritative map whenever the user changes.
+  // Load the authoritative map from the server whenever the user changes.
   useEffect(() => {
     if (!userId) {
       setProgress({})
@@ -92,9 +63,6 @@ export function useProgress(): UseProgress {
         setProgress(map)
         setError(null)
         setLoading(false)
-        const legacy = readLegacy()
-        if (legacy && Object.keys(legacy).length > 0)
-          setLegacyMergeAvailable(true)
       })
       .catch((e: unknown) => {
         if (ignore) return
@@ -115,7 +83,6 @@ export function useProgress(): UseProgress {
     }
   }, [])
 
-  // Reconcile a single day from the server's authoritative row.
   const applyRow = useCallback((day: number, row: DayProgressRow | null) => {
     setProgress((prev) => {
       const next = { ...prev }
@@ -125,7 +92,6 @@ export function useProgress(): UseProgress {
     })
   }, [])
 
-  // Optimistic update + queued server write + reconcile.
   const runWrite = useCallback(
     (
       day: number,
@@ -159,10 +125,6 @@ export function useProgress(): UseProgress {
     (dayNumber: number) => progress[dayNumber]?.bestScorePct,
     [progress],
   )
-  const getSavedAnswers = useCallback(
-    (dayNumber: number) => progress[dayNumber]?.answers,
-    [progress],
-  )
 
   const markInProgress = useCallback(
     (dayNumber: number) => {
@@ -170,10 +132,7 @@ export function useProgress(): UseProgress {
       if (cur === 'done' || cur === 'in-progress') return
       runWrite(
         dayNumber,
-        (prev) => ({
-          ...prev,
-          [dayNumber]: { ...prev[dayNumber], status: 'in-progress' },
-        }),
+        (prev) => ({ ...prev, [dayNumber]: { ...prev[dayNumber], status: 'in-progress' } }),
         () => apiMarkInProgress(dayNumber),
       )
     },
@@ -184,10 +143,7 @@ export function useProgress(): UseProgress {
     (dayNumber: number) => {
       runWrite(
         dayNumber,
-        (prev) => ({
-          ...prev,
-          [dayNumber]: { ...prev[dayNumber], status: 'done' },
-        }),
+        (prev) => ({ ...prev, [dayNumber]: { ...prev[dayNumber], status: 'done' } }),
         () => apiMarkDone(dayNumber),
       )
     },
@@ -214,27 +170,19 @@ export function useProgress(): UseProgress {
     [runWrite],
   )
 
+  /** Individual answers are already persisted per question; this records the score. */
   const recordPractice = useCallback(
-    (
-      dayNumber: number,
-      scorePct: number,
-      answers: Record<string, OptionKey>,
-    ) => {
+    (dayNumber: number, scorePct: number) => {
       runWrite(
         dayNumber,
         (prev) => {
           const best = Math.max(prev[dayNumber]?.bestScorePct ?? 0, scorePct)
           return {
             ...prev,
-            [dayNumber]: {
-              ...prev[dayNumber],
-              status: 'done',
-              bestScorePct: best,
-              answers,
-            },
+            [dayNumber]: { ...prev[dayNumber], status: 'done', bestScorePct: best },
           }
         },
-        () => apiRecordPractice(dayNumber, scorePct, answers),
+        () => apiRecordPractice(dayNumber, scorePct, {}),
       )
     },
     [runWrite],
@@ -242,41 +190,12 @@ export function useProgress(): UseProgress {
 
   const resetAll = useCallback(() => {
     setProgress({})
-    if (userId) {
-      writeCache(userId, {})
-      apiResetAll(userId).catch((e) => {
-        console.warn('Xoá tiến trình thất bại', e)
-        setError((e as Error)?.message ?? 'Lỗi xoá tiến trình')
-        void refetch()
-      })
-    }
-    clearLocalDrafts(TOTAL_DAYS)
-  }, [userId, refetch])
-
-  const applyLegacyMerge = useCallback(() => {
-    const legacy = readLegacy()
-    setLegacyMergeAvailable(false)
-    clearLegacy()
-    if (!userId || !legacy || Object.keys(legacy).length === 0) return
-    const merged = mergeMaps(progressRef.current, legacy)
-    setProgress(merged)
-    const rows = Object.entries(merged).map(([day, dp]) => ({
-      day_number: Number(day),
-      status: dp.status,
-      best_score_pct: dp.bestScorePct ?? null,
-      answers: dp.answers ?? {},
-    }))
-    apiUpsertMerged(userId, rows).catch((e) => {
-      console.warn('Gộp tiến trình thất bại', e)
-      setError((e as Error)?.message ?? 'Lỗi gộp tiến trình')
+    resetAllProgress().catch((e) => {
+      console.warn('Xoá tiến trình thất bại', e)
+      setError((e as Error)?.message ?? 'Lỗi xoá tiến trình')
       void refetch()
     })
-  }, [userId, refetch])
-
-  const dismissLegacyMerge = useCallback(() => {
-    setLegacyMergeAvailable(false)
-    clearLegacy()
-  }, [])
+  }, [refetch])
 
   const doneCount = useMemo(
     () => Object.values(progress).filter((p) => p.status === 'done').length,
@@ -293,7 +212,6 @@ export function useProgress(): UseProgress {
     error,
     getStatus,
     getBestScore,
-    getSavedAnswers,
     markInProgress,
     markDone,
     toggleDone,
@@ -301,8 +219,5 @@ export function useProgress(): UseProgress {
     resetAll,
     doneCount,
     completionPct,
-    legacyMergeAvailable,
-    applyLegacyMerge,
-    dismissLegacyMerge,
   }
 }

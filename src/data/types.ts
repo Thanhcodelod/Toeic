@@ -24,6 +24,8 @@ export type WordForm =
 /** A multiple-choice question (Part 5 grammar quiz OR a practice test item). */
 export interface QuizQuestion {
   id: string
+  /** Stable order within its day — the key used to persist answers server-side. */
+  ord: number
   question: string
   options: Record<OptionKey, string>
   correct: OptionKey
@@ -196,8 +198,6 @@ export interface DayProgress {
   status: Exclude<DayStatus, 'not-started'>
   /** Best practice-test score as a percentage (0–100). */
   bestScorePct?: number
-  /** Last submitted answers, keyed by question id, for resume/review. */
-  answers?: Record<string, OptionKey>
 }
 
 /** The full progress map: day number -> progress. */

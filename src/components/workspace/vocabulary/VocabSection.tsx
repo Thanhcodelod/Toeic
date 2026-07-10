@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Brain, Layers } from 'lucide-react'
 import { cn } from '../../../lib/cn'
-import { recordVocabResults } from '../../../lib/api'
 import { FlashcardDeck } from './FlashcardDeck'
 import { VocabQuiz } from './VocabQuiz'
 import type { VocabCard } from '../../../data/types'
@@ -48,14 +47,7 @@ export function VocabSection({ cards }: VocabSectionProps) {
       {tab === 'learn' ? (
         <FlashcardDeck cards={cards} />
       ) : (
-        <VocabQuiz
-          cards={cards}
-          onFinish={(results) => {
-            recordVocabResults(results).catch((e) =>
-              console.warn('Lưu tiến trình từ vựng thất bại', e),
-            )
-          }}
-        />
+        <VocabQuiz cards={cards} />
       )}
     </div>
   )

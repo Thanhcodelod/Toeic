@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { cn } from '../../../lib/cn'
 import { useSpeak } from '../../../hooks/useSpeak'
+import { recordVocabAnswer } from '../../../lib/answersApi'
 import type { VocabCard } from '../../../data/types'
 
 type ConcreteMode =
@@ -109,8 +110,8 @@ const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ')
 
 interface VocabQuizProps {
   cards: VocabCard[]
-  /** Fired once when the session ends, with per-word results (for persistence). */
-  onFinish?: (results: { id: number; correct: boolean }[]) => void
+  /** Fired once when the session ends (each answer is already saved to the DB). */
+  onFinish?: () => void
   /** Force a fixed number of questions (default: user picks). */
   fixedCount?: number
   /** Hide the setup screen and auto-start in mixed mode (for external review). */
@@ -174,14 +175,19 @@ export function VocabQuiz({
     setChecked(true)
     if (ok) setCorrectCount((c) => c + 1)
     else setWrongCards((w) => [...w, q.card])
-    if (q.card.vocabItemId != null)
+    // persist THIS single answer immediately
+    if (q.card.vocabItemId != null) {
       resultsRef.current.push({ id: q.card.vocabItemId, correct: ok })
+      recordVocabAnswer(q.card.vocabItemId, ok).catch((e) =>
+        console.warn('Luu tien trinh tu vung that bai', e),
+      )
+    }
   }
 
   const next = () => {
     if (idx + 1 >= questions.length) {
       setPhase('done')
-      onFinish?.(resultsRef.current)
+      onFinish?.()
       return
     }
     const ni = idx + 1

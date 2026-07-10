@@ -7,12 +7,7 @@ import {
   RefreshCw,
   Sparkles,
 } from 'lucide-react'
-import {
-  getNewVocab,
-  getReviewVocab,
-  getVocabStats,
-  recordVocabResults,
-} from '../../lib/api'
+import { getNewVocab, getReviewVocab, getVocabStats } from '../../lib/api'
 import { UserMenu } from '../../auth/UserMenu'
 import { VocabQuiz } from '../workspace/vocabulary/VocabQuiz'
 import type { VocabCard, VocabStats } from '../../data/types'
@@ -110,11 +105,7 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
             cards={batch}
             autoStart
             fixedCount={batch.length}
-            onFinish={(results) => {
-              recordVocabResults(results).catch((e) =>
-                console.warn('Lưu tiến trình thất bại', e),
-              )
-            }}
+            onFinish={() => void refreshStats()}
             onExit={exitBatch}
           />
         ) : (
