@@ -102,7 +102,12 @@ export function DayWorkspace({ day, progress, onSelectDay }: DayWorkspaceProps) 
       id: 'vocab',
       label: 'Từ vựng',
       icon: Layers,
-      node: <VocabSection cards={day.vocabulary} />,
+      node: (
+        <VocabSection
+          cards={day.vocabulary}
+          onLessonComplete={() => progress.markDone(day.day)}
+        />
+      ),
     })
   }
   if (day.reviewOfDay) {

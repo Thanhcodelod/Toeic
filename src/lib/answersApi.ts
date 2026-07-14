@@ -120,12 +120,108 @@ export async function saveTestSession(
 
 // --- Vocabulary: one answer at a time ---------------------------------------
 
-export async function recordVocabAnswer(itemId: number, correct: boolean): Promise<void> {
-  const { error } = await getSupabase().rpc('record_vocab_answer', {
+/**
+ * ÔN TẬP ngắt quãng: đúng → lên 1 cấp (hẹn ôn xa hơn), sai → tụt 1 cấp (ôn ngay).
+ * Trả về cấp độ mới do SERVER quyết định.
+ */
+export async function answerVocab(itemId: number, correct: boolean): Promise<number> {
+  const { data, error } = await getSupabase().rpc('answer_vocab', {
     p_item: itemId,
     p_correct: correct,
   })
   if (error) throw new Error(error.message)
+  return Number(data ?? 0)
+}
+
+export interface VocabCheckResult {
+  /** 0 Chưa học · 1 Mới học · … · 5 Thông thạo */
+  level: number
+  /** Số DẠNG câu hỏi đã trả lời đúng. */
+  checks: number
+  /** Số dạng cần qua để tốt nghiệp (server tự kẹp trong [4..6]). */
+  need: number
+  kindsOk: string[]
+  /** checks >= need — từ này đã qua, không hỏi lại nữa. */
+  passed: boolean
+  timesTested: number
+  timesCorrect: number
+  dueAt: string | null
+}
+
+/**
+ * BÀI HỌC: trả lời một câu ở một DẠNG cụ thể.
+ * Server ghi dạng vào `kinds_ok` (đúng) hoặc gỡ ra (sai), và tự tốt nghiệp từ
+ * 0 → 1 khi đã qua đủ 6 dạng khác nhau. `pool` = số dạng client phục vụ được.
+ */
+export async function answerVocabCheck(
+  itemId: number,
+  kind: string,
+  correct: boolean,
+  pool: number,
+): Promise<VocabCheckResult> {
+  const { data, error } = await getSupabase().rpc('answer_vocab_check', {
+    p_item: itemId,
+    p_kind: kind,
+    p_correct: correct,
+    p_pool: pool,
+  })
+  if (error) throw new Error(error.message)
+  const d = (data ?? {}) as Record<string, unknown>
+  return {
+    level: Number(d.level ?? 0),
+    checks: Number(d.checks ?? 0),
+    need: Number(d.need ?? 6),
+    kindsOk: (d.kindsOk as string[]) ?? [],
+    passed: Boolean(d.passed),
+    timesTested: Number(d.timesTested ?? 0),
+    timesCorrect: Number(d.timesCorrect ?? 0),
+    dueAt: (d.dueAt as string | null) ?? null,
+  }
+}
+
+export interface VocabWordProgress {
+  /** 0 chưa học · 1 Mới học · 2 Nhớ tạm · 3 Nhớ lâu · 4 Thuộc lòng · 5 Thông thạo */
+  level: number
+  /** Các DẠNG câu hỏi đã trả lời đúng cho từ này. */
+  kindsOk: string[]
+  timesTested: number
+  timesCorrect: number
+  mastered: boolean
+  dueAt: string | null
+}
+
+/** Mastery of specific words (for the day's deck) — read straight from the DB. */
+export async function getVocabProgressFor(
+  itemIds: number[],
+): Promise<Record<number, VocabWordProgress>> {
+  if (itemIds.length === 0) return {}
+  const { data, error } = await getSupabase()
+    .from('user_vocab_progress')
+    .select(
+      'vocab_item_id, level, kinds_ok, times_tested, times_correct, mastered, due_at',
+    )
+    .in('vocab_item_id', itemIds)
+  if (error) throw new Error(error.message)
+  const out: Record<number, VocabWordProgress> = {}
+  for (const r of (data ?? []) as {
+    vocab_item_id: number
+    level: number
+    kinds_ok: string[] | null
+    times_tested: number
+    times_correct: number
+    mastered: boolean
+    due_at: string | null
+  }[]) {
+    out[r.vocab_item_id] = {
+      level: r.level,
+      kindsOk: r.kinds_ok ?? [],
+      timesTested: r.times_tested,
+      timesCorrect: r.times_correct,
+      mastered: r.mastered,
+      dueAt: r.due_at,
+    }
+  }
+  return out
 }
 
 // --- Dictation: one line at a time ------------------------------------------

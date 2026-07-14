@@ -353,7 +353,9 @@ export async function getVocabStats(): Promise<VocabStats> {
   return {
     total: d.total ?? 0,
     started: d.started ?? 0,
+    learning: d.learning ?? 0,
     mastered: d.mastered ?? 0,
+    due: d.due ?? 0,
   }
 }
 

@@ -10,7 +10,10 @@ import {
 import { getNewVocab, getReviewVocab, getVocabStats } from '../../lib/api'
 import { UserMenu } from '../../auth/UserMenu'
 import { VocabQuiz } from '../workspace/vocabulary/VocabQuiz'
+import { VocabLearnSession } from '../workspace/vocabulary/VocabLearnSession'
 import type { VocabCard, VocabStats } from '../../data/types'
+
+type BatchKind = 'new' | 'review'
 
 interface VocabReviewPageProps {
   onBack: () => void
@@ -21,6 +24,7 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
   const [statsLoading, setStatsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [batch, setBatch] = useState<VocabCard[] | null>(null)
+  const [batchKind, setBatchKind] = useState<BatchKind>('new')
   const [fetching, setFetching] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [count, setCount] = useState(15)
@@ -41,7 +45,7 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
     void refreshStats()
   }, [refreshStats])
 
-  const startBatch = async (kind: 'new' | 'review') => {
+  const startBatch = async (kind: BatchKind) => {
     setFetching(true)
     setNotice(null)
     try {
@@ -51,10 +55,11 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
         setNotice(
           kind === 'new'
             ? 'Bạn đã học qua tất cả các từ trong kho! Hãy chuyển sang “Ôn từ chưa thuộc”.'
-            : 'Chưa có từ nào cần ôn (bạn chưa học từ nào, hoặc đã thành thạo hết). Hãy “Học từ mới” trước.',
+            : 'Chưa có từ nào tới hạn ôn. Hãy “Học từ mới”, hoặc quay lại sau khi tới lịch ôn.',
         )
         return
       }
+      setBatchKind(kind)
       setBatch(cards)
     } catch (e) {
       setNotice((e as Error)?.message ?? 'Lỗi tải từ vựng')
@@ -100,9 +105,21 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
       </header>
 
       <main className="thin-scrollbar flex-1 overflow-y-auto px-4 py-6">
-        {batch ? (
+        {batch && batchKind === 'new' ? (
+          // Học từ mới = đúng bài học xen kẽ như trong lộ trình 90 ngày:
+          // gặp 2 từ → kiểm tra ngay 2 từ đó → qua đủ 6 dạng mới thôi.
+          <VocabLearnSession
+            cards={batch}
+            onExit={() => {
+              void refreshStats()
+              exitBatch()
+            }}
+          />
+        ) : batch ? (
+          // Ôn tập ngắt quãng: đúng thì LÊN cấp, sai thì tụt cấp.
           <VocabQuiz
             cards={batch}
+            mode="review"
             autoStart
             fixedCount={batch.length}
             onFinish={() => void refreshStats()}
@@ -134,24 +151,30 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
                 <p className="mt-3 text-sm text-rose-600">{error}</p>
               ) : stats ? (
                 <>
-                  <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
                     <div className="rounded-xl bg-slate-50 p-3">
                       <p className="text-2xl font-bold text-slate-900">
                         {stats.total}
                       </p>
                       <p className="text-xs text-slate-500">Tổng từ</p>
                     </div>
+                    <div className="rounded-xl bg-amber-50 p-3">
+                      <p className="text-2xl font-bold text-amber-600">
+                        {stats.learning}
+                      </p>
+                      <p className="text-xs text-slate-500">Đang học dở</p>
+                    </div>
                     <div className="rounded-xl bg-violet-50 p-3">
                       <p className="text-2xl font-bold text-violet-700">
                         {stats.started}
                       </p>
-                      <p className="text-xs text-slate-500">Đã học</p>
+                      <p className="text-xs text-slate-500">Đã qua 6 dạng</p>
                     </div>
                     <div className="rounded-xl bg-emerald-50 p-3">
                       <p className="text-2xl font-bold text-emerald-600">
                         {stats.mastered}
                       </p>
-                      <p className="text-xs text-slate-500">Thành thạo</p>
+                      <p className="text-xs text-slate-500">Thông thạo</p>
                     </div>
                   </div>
                   <div className="mt-4">
@@ -214,7 +237,7 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
                   Học từ mới
                 </span>
                 <span className="text-sm text-slate-500">
-                  Những từ bạn chưa học lần nào.
+                  Gặp 2 từ → kiểm tra ngay 2 từ đó. Qua đủ 6 dạng mới thôi.
                 </span>
               </button>
 
@@ -228,10 +251,16 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
                   <Sparkles className="h-6 w-6" />
                 </span>
                 <span className="text-base font-bold text-slate-900">
-                  Ôn từ chưa thuộc
+                  Ôn từ đến hạn
+                  {stats && stats.due > 0 && (
+                    <span className="ml-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                      {stats.due}
+                    </span>
+                  )}
                 </span>
                 <span className="text-sm text-slate-500">
-                  Từ đã học nhưng chưa đúng đủ 6 lần.
+                  Từ đã học, tới lịch ôn (2 giờ → 2 → 3 → 5 → 8 ngày). Đúng thì lên
+                  cấp.
                 </span>
               </button>
             </div>

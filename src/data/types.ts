@@ -72,10 +72,14 @@ export interface VocabCard {
 export interface VocabStats {
   /** Total unique words in the master pool. */
   total: number
-  /** Words the user has started (has any progress). */
+  /** Words that graduated the 6-kind gate (level >= 1). */
   started: number
-  /** Words answered correctly >= 6 times (mastered). */
+  /** Words mid-lesson: some kinds passed, not yet all 6. */
+  learning: number
+  /** Words at the top memory level (Thông thạo). */
   mastered: number
+  /** Words whose spaced-repetition review is due now. */
+  due: number
 }
 
 /** Content for a 'practice' (mini-test) day — question-based, no PDF required. */

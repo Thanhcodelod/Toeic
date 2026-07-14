@@ -15,10 +15,12 @@ import {
 } from 'lucide-react'
 import { cn } from '../../../lib/cn'
 import { useSpeak } from '../../../hooks/useSpeak'
-import { recordVocabAnswer } from '../../../lib/answersApi'
+import { answerVocab, answerVocabCheck } from '../../../lib/answersApi'
+import { availableKinds, type ExerciseKind } from '../../../lib/vocabSession'
 import type { VocabCard } from '../../../data/types'
 
 type ConcreteMode =
+  | 'tf'
   | 'listen-meaning'
   | 'word-meaning'
   | 'meaning-word'
@@ -28,6 +30,7 @@ type ConcreteMode =
 type QuizMode = 'mixed' | ConcreteMode
 
 const CONCRETE: ConcreteMode[] = [
+  'tf',
   'listen-meaning',
   'word-meaning',
   'meaning-word',
@@ -36,16 +39,20 @@ const CONCRETE: ConcreteMode[] = [
   'cloze',
 ]
 
+const NEEDS_SPEECH: ConcreteMode[] = ['listen-meaning', 'listen-type']
+
 interface Question {
   card: VocabCard
   mode: ConcreteMode
   options: string[] // MC option texts ([] for typing modes)
   answer: string
   cloze?: string // blanked sentence (cloze mode)
+  tfMeaning?: string // đúng/sai: nghĩa đang được gán cho từ (có thể là nghĩa từ khác)
 }
 
 const MODE_META: { id: QuizMode; label: string; desc: string; icon: typeof Ear }[] = [
-  { id: 'mixed', label: 'Tổng hợp', desc: 'Trộn cả 6 kiểu', icon: Shuffle },
+  { id: 'mixed', label: 'Tổng hợp', desc: 'Trộn đủ 7 dạng', icon: Shuffle },
+  { id: 'tf', label: 'Đúng hay sai?', desc: 'Nghĩa này có phải của từ đó', icon: Check },
   { id: 'listen-meaning', label: 'Nghe → nghĩa', desc: 'Nghe từ, chọn nghĩa', icon: Ear },
   { id: 'word-meaning', label: 'Từ → nghĩa', desc: 'Nhìn từ, chọn nghĩa', icon: Eye },
   { id: 'meaning-word', label: 'Nghĩa → từ', desc: 'Nhìn nghĩa, chọn từ', icon: Eye },
@@ -79,13 +86,32 @@ function buildQuestions(
   cards: VocabCard[],
   mode: QuizMode,
   count: number,
+  canSpeak: boolean,
 ): Question[] {
   const meanings = cards.map((c) => c.meaning)
   const words = cards.map((c) => c.word)
   const picked = shuffle(cards).slice(0, Math.min(count, cards.length))
+  // Không bao giờ ra câu nghe trên trình duyệt không phát âm được: người học
+  // không thể trả lời, mà câu sai lại gỡ mất một dạng đã qua.
+  const usable = CONCRETE.filter((m) => canSpeak || !NEEDS_SPEECH.includes(m))
 
   return picked.map((card, i) => {
-    let m: ConcreteMode = mode === 'mixed' ? CONCRETE[i % CONCRETE.length] : mode
+    let m: ConcreteMode = mode === 'mixed' ? usable[i % usable.length] : mode
+    if (!canSpeak && NEEDS_SPEECH.includes(m)) m = 'word-meaning'
+
+    if (m === 'tf') {
+      const others = cards.filter((c) => c.id !== card.id)
+      const decoy = others.length ? others[Math.floor(Math.random() * others.length)] : null
+      const showTrue = !decoy || Math.random() < 0.5
+      const shown = showTrue ? card : (decoy as VocabCard)
+      return {
+        card,
+        mode: m,
+        options: ['Sai', 'Đúng'],
+        answer: showTrue ? 'Đúng' : 'Sai',
+        tfMeaning: shown.meaning,
+      }
+    }
 
     // Cloze needs the word to appear in the example; else fall back.
     let cloze: string | undefined
@@ -108,8 +134,24 @@ function buildQuestions(
 
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ')
 
+/** Mode kiểm tra ở đây ↔ DẠNG (kind) mà DB ghi vào kinds_ok. */
+const MODE_KIND: Record<ConcreteMode, ExerciseKind> = {
+  tf: 'tf',
+  'listen-meaning': 'listen-meaning',
+  'word-meaning': 'word-meaning',
+  'meaning-word': 'meaning-word',
+  'type-word': 'type',
+  'listen-type': 'listen-type',
+  cloze: 'cloze',
+}
+
 interface VocabQuizProps {
   cards: VocabCard[]
+  /**
+   * `lesson` (mặc định) — mỗi câu đúng ghi thêm một DẠNG vào cổng 6-dạng của từ.
+   * `review`  — phiên ôn tập ngắt quãng: đúng thì LÊN cấp, sai thì tụt cấp.
+   */
+  mode?: 'lesson' | 'review'
   /** Fired once when the session ends (each answer is already saved to the DB). */
   onFinish?: () => void
   /** Force a fixed number of questions (default: user picks). */
@@ -122,6 +164,7 @@ interface VocabQuizProps {
 
 export function VocabQuiz({
   cards,
+  mode: saveMode = 'lesson',
   onFinish,
   fixedCount,
   autoStart = false,
@@ -134,7 +177,14 @@ export function VocabQuiz({
     autoStart ? 'playing' : 'setup',
   )
   const [questions, setQuestions] = useState<Question[]>(() =>
-    autoStart ? buildQuestions(cards, 'mixed', fixedCount ?? cards.length) : [],
+    autoStart
+      ? buildQuestions(
+          cards,
+          'mixed',
+          fixedCount ?? cards.length,
+          typeof window !== 'undefined' && 'speechSynthesis' in window,
+        )
+      : [],
   )
   const [idx, setIdx] = useState(0)
   const [pickedOpt, setPickedOpt] = useState<string | null>(null)
@@ -153,7 +203,7 @@ export function VocabQuiz({
   const start = (overrideCards?: VocabCard[]) => {
     const src = overrideCards ?? cards
     const n = overrideCards ? src.length : Math.min(count, src.length)
-    const qs = buildQuestions(src, mode, n)
+    const qs = buildQuestions(src, mode, n, supported)
     setQuestions(qs)
     setIdx(0)
     setPickedOpt(null)
@@ -178,9 +228,16 @@ export function VocabQuiz({
     // persist THIS single answer immediately
     if (q.card.vocabItemId != null) {
       resultsRef.current.push({ id: q.card.vocabItemId, correct: ok })
-      recordVocabAnswer(q.card.vocabItemId, ok).catch((e) =>
-        console.warn('Luu tien trinh tu vung that bai', e),
-      )
+      const save =
+        saveMode === 'review'
+          ? answerVocab(q.card.vocabItemId, ok)
+          : answerVocabCheck(
+              q.card.vocabItemId,
+              MODE_KIND[q.mode],
+              ok,
+              availableKinds(q.card, supported).length,
+            )
+      save.catch((e) => console.warn('Lưu tiến trình từ vựng thất bại', e))
     }
   }
 
@@ -207,12 +264,14 @@ export function VocabQuiz({
             Kiểm tra ghi nhớ từ vựng
           </h3>
           <p className="mt-1 text-sm text-slate-500">
-            Chọn kiểu kiểm tra và số câu. Trả lời đúng một từ ≥ 6 lần (đa dạng
-            kiểu) để "thành thạo" từ đó.
+            Chọn kiểu kiểm tra và số câu. Mỗi kiểu trả lời đúng sẽ tính là một
+            “dạng đã qua” — đủ 6 dạng khác nhau thì từ đó mới được coi là đã thuộc.
           </p>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {MODE_META.map((m) => {
+            {MODE_META.filter(
+              (m) => supported || (m.id !== 'listen-meaning' && m.id !== 'listen-type'),
+            ).map((m) => {
               const Icon = m.icon
               const active = m.id === mode
               return (
@@ -348,7 +407,25 @@ export function VocabQuiz({
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
         {/* Prompt by mode */}
-        {q.mode === 'listen-meaning' || q.mode === 'listen-type' ? (
+        {q.mode === 'tf' ? (
+          <div className="py-2 text-center">
+            <p className="text-lg text-slate-800">{q.tfMeaning}</p>
+            <p className="my-3 text-sm font-medium text-emerald-600">là nghĩa của</p>
+            <div className="flex items-center justify-center gap-2">
+              <h3 className="text-3xl font-bold text-slate-900">{q.card.word}</h3>
+              {supported && (
+                <button
+                  type="button"
+                  onClick={() => speak(q.card.word)}
+                  className="grid h-8 w-8 place-items-center rounded-full bg-violet-100 text-violet-700 hover:bg-violet-200"
+                  aria-label="Nghe phát âm"
+                >
+                  <Volume2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        ) : q.mode === 'listen-meaning' || q.mode === 'listen-type' ? (
           <div className="flex flex-col items-center gap-3 py-2">
             <button
               type="button"
@@ -427,7 +504,12 @@ export function VocabQuiz({
             )}
           </div>
         ) : (
-          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          <div
+            className={cn(
+              'mt-5 grid gap-2',
+              q.mode === 'tf' ? 'grid-cols-2' : 'sm:grid-cols-2',
+            )}
+          >
             {q.options.map((opt) => {
               const isPicked = pickedOpt === opt
               const showCorrect = checked && opt === q.answer
