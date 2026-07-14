@@ -1,5 +1,12 @@
 import { useState, type ReactNode } from 'react'
-import { BookMarked, GraduationCap, Headphones, Menu, X } from 'lucide-react'
+import {
+  BookMarked,
+  BookOpenCheck,
+  GraduationCap,
+  Headphones,
+  Menu,
+  X,
+} from 'lucide-react'
 import { ProgressBar } from './ProgressBar'
 import { Sidebar } from './sidebar/Sidebar'
 import { UserMenu } from '../auth/UserMenu'
@@ -16,6 +23,7 @@ interface LayoutProps {
   onSelectDay: (day: number) => void
   onOpenVocab: () => void
   onOpenDictation: () => void
+  onOpenReading: () => void
   children: ReactNode
 }
 
@@ -28,6 +36,7 @@ export function Layout({
   onSelectDay,
   onOpenVocab,
   onOpenDictation,
+  onOpenReading,
   children,
 }: LayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -82,6 +91,14 @@ export function Layout({
               <BookMarked className="h-4 w-4" />
               Ôn từ vựng
             </button>
+            <button
+              type="button"
+              onClick={onOpenReading}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
+            >
+              <BookOpenCheck className="h-4 w-4" />
+              Ôn Reading
+            </button>
             <div className="w-40">
               <ProgressBar
                 value={progress.completionPct}
@@ -110,6 +127,14 @@ export function Layout({
               className="grid h-9 w-9 place-items-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100"
             >
               <BookMarked className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenReading}
+              aria-label="Ôn Reading"
+              className="grid h-9 w-9 place-items-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
+            >
+              <BookOpenCheck className="h-4 w-4" />
             </button>
             <UserMenu compact />
           </div>

@@ -3,12 +3,13 @@ import { Layout } from './components/Layout'
 import { DayView } from './components/DayView'
 import { VocabReviewPage } from './components/vocab/VocabReviewPage'
 import { DictationPage } from './components/dictation/DictationPage'
+import { ReadingPage } from './components/reading/ReadingPage'
 import { purgeLegacyLocalStorage } from './lib/answersApi'
 import { useDays } from './hooks/useDays'
 import { useProgress } from './hooks/useProgress'
 import { TOTAL_DAYS } from './data/constants'
 
-type View = 'course' | 'vocab' | 'dictation'
+type View = 'course' | 'vocab' | 'dictation' | 'reading'
 
 function clampDay(value: number): number {
   if (Number.isNaN(value)) return 1
@@ -24,7 +25,7 @@ function readDayFromUrl(): number {
 function readViewFromUrl(): View {
   if (typeof window === 'undefined') return 'course'
   const v = new URLSearchParams(window.location.search).get('view')
-  return v === 'vocab' || v === 'dictation' ? v : 'course'
+  return v === 'vocab' || v === 'dictation' || v === 'reading' ? v : 'course'
 }
 
 export default function App() {
@@ -75,6 +76,9 @@ export default function App() {
   if (view === 'dictation') {
     return <DictationPage onBack={() => selectView('course')} />
   }
+  if (view === 'reading') {
+    return <ReadingPage onBack={() => selectView('course')} />
+  }
 
   return (
     <>
@@ -87,6 +91,7 @@ export default function App() {
         onSelectDay={selectDay}
         onOpenVocab={() => selectView('vocab')}
         onOpenDictation={() => selectView('dictation')}
+        onOpenReading={() => selectView('reading')}
       >
         <DayView
           key={selectedDay}
