@@ -164,28 +164,36 @@ export function DayWorkspace({ day, progress, onSelectDay }: DayWorkspaceProps) 
             </h1>
           </div>
 
-          <button
-            type="button"
-            onClick={() => progress.toggleDone(day.day)}
-            className={cn(
-              'inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors',
-              isDone
-                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                : 'bg-brand-600 text-white shadow-card hover:bg-brand-700',
-            )}
+          {/* Nút đổi trạng thái — nảy nhẹ (pulse) đúng lúc vừa chuyển sang
+              "hoàn thành". key đổi theo isDone nên hiệu ứng chỉ chạy lại khi
+              trạng thái lật, không chạy lại khi đổi tab / render lại. */}
+          <span
+            key={isDone ? 'done' : 'todo'}
+            className={cn('inline-flex shrink-0', isDone && 'animate-pulse-once')}
           >
-            {isDone ? (
-              <>
-                <CheckCircle2 className="h-4 w-4" />
-                Đã hoàn thành
-              </>
-            ) : (
-              <>
-                <Circle className="h-4 w-4" />
-                Đánh dấu hoàn thành
-              </>
-            )}
-          </button>
+            <button
+              type="button"
+              onClick={() => progress.toggleDone(day.day)}
+              className={cn(
+                'press inline-flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold',
+                isDone
+                  ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                  : 'bg-brand-600 text-white shadow-card hover:bg-brand-700',
+              )}
+            >
+              {isDone ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4" />
+                  Đã hoàn thành
+                </>
+              ) : (
+                <>
+                  <Circle className="h-4 w-4" />
+                  Đánh dấu hoàn thành
+                </>
+              )}
+            </button>
+          </span>
         </div>
       </header>
 

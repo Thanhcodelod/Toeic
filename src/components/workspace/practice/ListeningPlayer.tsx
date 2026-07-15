@@ -120,7 +120,7 @@ export function ListeningPlayer({
             type="button"
             onClick={playing ? stop : play}
             className={cn(
-              'inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors',
+              'press inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold',
               playing
                 ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
                 : 'bg-brand-600 text-white hover:bg-brand-700',
@@ -146,7 +146,7 @@ export function ListeningPlayer({
           <button
             type="button"
             onClick={() => setShowScript((s) => !s)}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            className="press ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
           >
             {showScript ? (
               <>
@@ -162,7 +162,7 @@ export function ListeningPlayer({
       </div>
 
       {allowTranscript && showScript && (
-        <div className="mt-3 whitespace-pre-line rounded-xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
+        <div className="mt-3 origin-top animate-fade-slide-down whitespace-pre-line rounded-xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
           {script}
         </div>
       )}

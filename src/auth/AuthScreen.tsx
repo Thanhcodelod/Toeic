@@ -24,6 +24,9 @@ export function AuthScreen() {
   }>({})
   const [confirmationSent, setConfirmationSent] = useState(false)
   const [showResend, setShowResend] = useState(false)
+  // Đổi giá trị mỗi lần có lỗi mới -> dùng làm `key` để hiệu ứng lắc phát lại,
+  // giúp mỗi lần đăng nhập thất bại đều được "cảm nhận".
+  const [errorNonce, setErrorNonce] = useState(0)
 
   // Cooldown for the "resend confirmation" button (~60s).
   const resend = useCountdown({ durationSeconds: 60 })
@@ -56,12 +59,15 @@ export function AuthScreen() {
         const { error } = await signIn(email.trim(), password)
         if (error) {
           setFormError(error)
+          setErrorNonce((n) => n + 1)
           if (error.includes('chưa được xác nhận')) setShowResend(true)
         }
       } else {
         const { error, needsConfirmation } = await signUp(email.trim(), password)
-        if (error) setFormError(error)
-        else if (needsConfirmation) setConfirmationSent(true)
+        if (error) {
+          setFormError(error)
+          setErrorNonce((n) => n + 1)
+        } else if (needsConfirmation) setConfirmationSent(true)
       }
     } finally {
       setSubmitting(false)
@@ -72,12 +78,13 @@ export function AuthScreen() {
     if (resend.running) return
     const { error } = await resendConfirmation(email.trim())
     setFormError(error)
+    if (error) setErrorNonce((n) => n + 1)
     resend.start()
   }
 
   return (
     <div className="min-h-screen grid place-items-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+      <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-card animate-pop-in">
         {/* Brand */}
         <div className="flex items-center gap-2.5">
           <div className="grid h-10 w-10 place-items-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-card">
@@ -92,9 +99,10 @@ export function AuthScreen() {
         </div>
 
         {confirmationSent ? (
-          <div className="mt-6 flex flex-col items-center text-center">
-            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
-              <MailCheck className="h-7 w-7" />
+          <div className="mt-6 flex flex-col items-center text-center animate-pop-in">
+            <div className="relative grid h-14 w-14 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
+              <span className="ripple-ring bg-emerald-400/30" />
+              <MailCheck className="h-7 w-7 animate-pop" />
             </div>
             <h2 className="mt-4 text-base font-semibold text-slate-800">
               Kiểm tra hộp thư của bạn
@@ -105,7 +113,10 @@ export function AuthScreen() {
               (kiểm tra cả mục Spam).
             </p>
             {formError && (
-              <p className="mt-3 w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              <p
+                key={errorNonce}
+                className="mt-3 w-full rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 animate-fade-slide-down"
+              >
                 {formError}
               </p>
             )}
@@ -113,7 +124,7 @@ export function AuthScreen() {
               type="button"
               onClick={handleResend}
               disabled={resend.running}
-              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+              className="press mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
             >
               {resend.running
                 ? `Có thể gửi lại sau ${resend.secondsLeft}s`
@@ -140,7 +151,12 @@ export function AuthScreen() {
               />
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+            {/* Đổi tab -> `key` đổi -> crossfade mượt thay vì nhảy phịch. */}
+            <form
+              key={mode}
+              onSubmit={handleSubmit}
+              className="mt-5 space-y-4 animate-fade-in"
+            >
               <div>
                 <label className="mb-1 block text-sm font-medium text-slate-700">
                   Email
@@ -195,27 +211,32 @@ export function AuthScreen() {
               </div>
 
               {formError && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {formError}
-                  {showResend && (
-                    <button
-                      type="button"
-                      onClick={handleResend}
-                      disabled={resend.running}
-                      className="mt-1 block font-semibold text-brand-700 hover:underline disabled:opacity-60"
-                    >
-                      {resend.running
-                        ? `Gửi lại sau ${resend.secondsLeft}s`
-                        : 'Gửi lại email xác nhận'}
-                    </button>
-                  )}
+                <div
+                  key={errorNonce}
+                  className="animate-fade-slide-down rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+                >
+                  <div className="animate-shake">
+                    {formError}
+                    {showResend && (
+                      <button
+                        type="button"
+                        onClick={handleResend}
+                        disabled={resend.running}
+                        className="press mt-1 block font-semibold text-brand-700 hover:underline disabled:opacity-60"
+                      >
+                        {resend.running
+                          ? `Gửi lại sau ${resend.secondsLeft}s`
+                          : 'Gửi lại email xác nhận'}
+                      </button>
+                    )}
+                  </div>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-card transition-colors hover:bg-brand-700 disabled:opacity-60"
+                className="press inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-brand-700 disabled:opacity-60"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {submitting

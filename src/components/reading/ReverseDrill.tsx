@@ -93,7 +93,7 @@ export function ReverseDrill() {
         <button
           type="button"
           onClick={() => void load()}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white"
+          className="press mt-3 inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white"
         >
           <RotateCcw className="h-4 w-4" /> Thử lại
         </button>
@@ -132,9 +132,9 @@ export function ReverseDrill() {
             <span
               key={s.id}
               className={cn(
-                'rounded-full px-2 py-0.5 text-[11px] font-semibold',
+                'rounded-full px-2 py-0.5 text-[11px] font-semibold transition duration-250 ease-spring',
                 step === s.id
-                  ? 'bg-violet-600 text-white'
+                  ? 'scale-105 bg-violet-600 text-white'
                   : 'bg-slate-100 text-slate-400',
               )}
             >
@@ -145,6 +145,8 @@ export function ReverseDrill() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+        {/* Mỗi bước là một lần trượt vào — key đổi theo bước để phát lại hiệu ứng */}
+        <div key={step} className="animate-fade-slide-up">
         {/* ---------- B1: câu tiếng Anh hiện ra, dịch sang tiếng Việt ---------- */}
         {step === 'vi' && (
           <>
@@ -168,7 +170,7 @@ export function ReverseDrill() {
             />
 
             {showRef && (
-              <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <div className="animate-fade-slide-down mt-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
                 <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">
                   Bản dịch mẫu
                 </p>
@@ -181,7 +183,7 @@ export function ReverseDrill() {
                 type="button"
                 onClick={() => setShowRef((s) => !s)}
                 disabled={!vi.trim()}
-                className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="press inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
               >
                 {showRef ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 {showRef ? 'Ẩn bản dịch mẫu' : 'Đối chiếu bản dịch mẫu'}
@@ -190,7 +192,7 @@ export function ReverseDrill() {
                 type="button"
                 onClick={() => setStep('en')}
                 disabled={!vi.trim()}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700 disabled:opacity-50"
+                className="press inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700 disabled:opacity-50"
               >
                 Giấu câu Anh, viết lại <ArrowRight className="h-4 w-4" />
               </button>
@@ -234,7 +236,7 @@ export function ReverseDrill() {
               type="button"
               onClick={() => void submit()}
               disabled={!en.trim() || busy}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700 disabled:opacity-50"
+              className="press mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700 disabled:opacity-50"
             >
               {busy && <Loader2 className="h-4 w-4 animate-spin" />}
               Chấm bài
@@ -255,7 +257,7 @@ export function ReverseDrill() {
                     : 'bg-rose-50',
               )}
             >
-              <p className="text-3xl font-bold tabular-nums text-slate-900">
+              <p className="animate-pop text-3xl font-bold tabular-nums text-slate-900">
                 {result.pct}%
               </p>
               <p className="mt-1 text-xs text-slate-500">
@@ -268,7 +270,7 @@ export function ReverseDrill() {
               <p className="text-xs font-bold uppercase tracking-wide text-slate-400">
                 Từ khoá cấu trúc bắt buộc
               </p>
-              <div className="mt-1.5 flex flex-wrap gap-1.5">
+              <div className="stagger mt-1.5 flex flex-wrap gap-1.5">
                 {result.keywords.map((k) => (
                   <span
                     key={k.kw}
@@ -320,12 +322,13 @@ export function ReverseDrill() {
             <button
               type="button"
               onClick={next}
-              className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700"
+              className="press mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700"
             >
               Câu tiếp theo <ArrowRight className="h-4 w-4" />
             </button>
           </>
         )}
+        </div>
       </div>
     </div>
   )

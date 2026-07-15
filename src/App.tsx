@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Layout } from './components/Layout'
 import { DayView } from './components/DayView'
 import { VocabReviewPage } from './components/vocab/VocabReviewPage'
@@ -70,18 +70,15 @@ export default function App() {
     purgeLegacyLocalStorage()
   }, [])
 
+  let content: ReactNode
   if (view === 'vocab') {
-    return <VocabReviewPage onBack={() => selectView('course')} />
-  }
-  if (view === 'dictation') {
-    return <DictationPage onBack={() => selectView('course')} />
-  }
-  if (view === 'reading') {
-    return <ReadingPage onBack={() => selectView('course')} />
-  }
-
-  return (
-    <>
+    content = <VocabReviewPage onBack={() => selectView('course')} />
+  } else if (view === 'dictation') {
+    content = <DictationPage onBack={() => selectView('course')} />
+  } else if (view === 'reading') {
+    content = <ReadingPage onBack={() => selectView('course')} />
+  } else {
+    content = (
       <Layout
         days={days}
         daysLoading={daysLoading}
@@ -100,6 +97,14 @@ export default function App() {
           onSelectDay={selectDay}
         />
       </Layout>
-    </>
+    )
+  }
+
+  // Keying the wrapper by `view` replays the entrance ONLY when the active view
+  // actually changes — not on every re-render (progress ticks, day changes…).
+  return (
+    <div key={view} className="animate-fade-slide-up">
+      {content}
+    </div>
   )
 }

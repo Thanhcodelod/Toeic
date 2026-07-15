@@ -139,19 +139,19 @@ export function DictationExercise({ testTitle, item, lines, onBack, onCompleted 
       <div className="mx-auto max-w-2xl">
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
           <div className="flex flex-col items-center gap-2 bg-gradient-to-br from-sky-600 to-sky-800 p-8 text-center text-white">
-            <Trophy className="h-10 w-10" />
-            <p className="text-4xl font-bold tabular-nums">{pct}%</p>
+            <Trophy className="h-10 w-10 animate-trophy-in" />
+            <p className="text-4xl font-bold tabular-nums animate-pop">{pct}%</p>
             <p className="text-sm text-sky-100">
               Đúng {correct}/{total} · mức {LEVEL_LABEL[level]}
             </p>
           </div>
           <div className="flex flex-wrap justify-center gap-2 p-5">
             <button type="button" onClick={restart}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              className="press inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
               <RotateCcw className="h-4 w-4" /> Làm lại
             </button>
             <button type="button" onClick={onBack}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-sky-700">
+              className="press inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-sky-700">
               Chọn câu khác
             </button>
           </div>
@@ -166,7 +166,7 @@ export function DictationExercise({ testTitle, item, lines, onBack, onCompleted 
       {/* Header */}
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={onBack}
-          className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
+          className="press inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
           <ArrowLeft className="h-4 w-4" /> Danh sách câu
         </button>
         <div className="text-sm text-slate-500">
@@ -187,7 +187,7 @@ export function DictationExercise({ testTitle, item, lines, onBack, onCompleted 
         {([1, 2, 3, 4] as DictLevel[]).map((l) => (
           <button key={l} type="button" onClick={() => setLevel(l)}
             className={cn(
-              'rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors',
+              'press rounded-lg border px-3 py-1.5 text-sm font-medium',
               level === l
                 ? 'border-sky-400 bg-sky-50 text-sky-700'
                 : 'border-slate-200 text-slate-600 hover:bg-slate-50',
@@ -198,7 +198,7 @@ export function DictationExercise({ testTitle, item, lines, onBack, onCompleted 
       </div>
 
       {/* Sentence card */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+      <div key={idx} className="animate-fade-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
         <div className="mb-3 flex items-center justify-between text-sm">
           <span className="font-semibold text-slate-600">Câu {idx + 1}/{lines.length}</span>
           {line.speaker && (
@@ -269,9 +269,12 @@ export function DictationExercise({ testTitle, item, lines, onBack, onCompleted 
         )}
 
         {checked && !isWhole && (
-          <p className="mt-4 flex items-center gap-2 text-sm">
+          <p className={cn(
+            'mt-4 flex items-center gap-2 text-sm',
+            scores.current[idx]?.correct !== blanks.length && 'animate-shake',
+          )}>
             {scores.current[idx]?.correct === blanks.length ? (
-              <><Check className="h-4 w-4 text-emerald-600" /><span className="text-emerald-700">Chính xác!</span></>
+              <><Check className="h-4 w-4 animate-pop text-emerald-600" /><span className="text-emerald-700">Chính xác!</span></>
             ) : (
               <><X className="h-4 w-4 text-rose-600" /><span className="text-slate-600">
                 Đúng {scores.current[idx]?.correct ?? 0}/{blanks.length} từ
@@ -284,19 +287,19 @@ export function DictationExercise({ testTitle, item, lines, onBack, onCompleted 
       {/* Controls */}
       <div className="flex flex-wrap items-center justify-center gap-2">
         <button type="button" disabled={idx === 0} onClick={() => setIdx(idx - 1)}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 enabled:hover:bg-slate-50 disabled:opacity-40">
+          className="press inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 enabled:hover:bg-slate-50 disabled:opacity-40">
           <ChevronLeft className="h-4 w-4" /> Câu trước
         </button>
         <button type="button" onClick={() => { setInputs({}); setSentence('') }} disabled={checked}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 enabled:hover:bg-slate-50 disabled:opacity-40">
+          className="press inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 enabled:hover:bg-slate-50 disabled:opacity-40">
           <Eraser className="h-4 w-4" /> Xoá hết
         </button>
         <button type="button" onClick={reveal} disabled={revealed}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 enabled:hover:bg-slate-50 disabled:opacity-40">
+          className="press inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-600 enabled:hover:bg-slate-50 disabled:opacity-40">
           <Eye className="h-4 w-4" /> Đáp án
         </button>
         <button type="button" onClick={next}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-bold text-white shadow-card hover:bg-sky-700">
+          className="press inline-flex items-center gap-1.5 rounded-xl bg-sky-600 px-5 py-2.5 text-sm font-bold text-white shadow-card hover:bg-sky-700">
           {!checked ? (<><Check className="h-4 w-4" /> Kiểm tra</>)
             : idx + 1 >= lines.length ? (<>Xem kết quả</>)
               : (<>Câu sau <ChevronRight className="h-4 w-4" /></>)}

@@ -101,7 +101,7 @@ export function QuizTab({ dayNumber, quiz, onComplete }: QuizTabProps) {
           <button
             type="button"
             onClick={reset}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            className="press inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
           >
             <RotateCcw className="h-4 w-4" />
             Làm lại
@@ -109,20 +109,24 @@ export function QuizTab({ dayNumber, quiz, onComplete }: QuizTabProps) {
         )}
       </div>
 
-      {/* Questions */}
-      {quiz.map((question, index) => (
-        <QuizCard
-          key={question.id}
-          question={question}
-          index={index}
-          selected={answers[question.id]}
-          onSelect={(key) => handleSelect(question, key)}
-        />
-      ))}
+      {/* Questions — hiện ra so le lúc tải xong. Mỗi thẻ có key ổn định
+          (question.id) nên hiệu ứng vào chỉ chạy một lần, không lặp lại
+          mỗi khi người dùng chọn đáp án. */}
+      <div className="stagger space-y-4">
+        {quiz.map((question, index) => (
+          <QuizCard
+            key={question.id}
+            question={question}
+            index={index}
+            selected={answers[question.id]}
+            onSelect={(key) => handleSelect(question, key)}
+          />
+        ))}
+      </div>
 
       {/* Completion banner */}
       {allAnswered && (
-        <div className="flex flex-col items-center gap-4 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6 text-center animate-fade-slide-up sm:flex-row sm:justify-between sm:text-left">
+        <div className="flex flex-col items-center gap-4 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-white p-6 text-center animate-pop-in sm:flex-row sm:justify-between sm:text-left">
           <div className="flex items-center gap-3">
             <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-600">
               <Award className="h-6 w-6" />
@@ -139,7 +143,7 @@ export function QuizTab({ dayNumber, quiz, onComplete }: QuizTabProps) {
           <button
             type="button"
             onClick={() => onComplete(scorePct)}
-            className="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-emerald-700"
+            className="press rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-emerald-700"
           >
             Đánh dấu hoàn thành ngày này
           </button>

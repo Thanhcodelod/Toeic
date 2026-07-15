@@ -25,7 +25,7 @@ export function ProgressBar({
       {!compact && (
         <div className="mb-1.5 flex items-center justify-between text-xs font-medium">
           <span className="text-slate-500">Tiến độ lộ trình</span>
-          <span className="text-brand-700">
+          <span className="text-brand-700 tabular-nums">
             {showLoading
               ? 'Đang tải…'
               : `Đã hoàn thành ${doneCount}/${total} ngày (${pct}%)`}
@@ -44,7 +44,7 @@ export function ProgressBar({
           <div className="h-full w-1/3 rounded-full bg-slate-300/80 animate-pulse" />
         ) : (
           <div
-            className="h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600 transition-[width] duration-500 ease-out"
+            className="bar-fill h-full rounded-full bg-gradient-to-r from-brand-500 to-brand-600"
             style={{ width: `${pct}%` }}
           />
         )}

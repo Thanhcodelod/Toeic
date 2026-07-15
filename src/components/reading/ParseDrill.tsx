@@ -91,7 +91,7 @@ export function ParseDrill() {
         <button
           type="button"
           onClick={() => void load()}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white"
+          className="press mt-3 inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white"
         >
           <RotateCcw className="h-4 w-4" /> Thử lại
         </button>
@@ -143,16 +143,16 @@ export function ParseDrill() {
                 disabled={!!result}
                 onClick={() => setSel(c.ord)}
                 className={cn(
-                  'flex flex-col items-start rounded-lg border-b-2 px-1.5 py-0.5 text-left transition-all',
+                  'press flex flex-col items-start rounded-lg border-b-2 px-1.5 py-0.5 text-left',
                   r ? ROLE_STYLE[r] : 'border-slate-200 hover:bg-slate-50',
-                  active && 'ring-2 ring-violet-400',
-                  result && ok === false && 'ring-2 ring-rose-400',
+                  active && 'scale-105 ring-2 ring-violet-400',
+                  result && ok === false && 'animate-shake ring-2 ring-rose-400',
                   result && ok === true && 'ring-1 ring-emerald-300',
                 )}
               >
                 <span>{c.text}</span>
                 {r && (
-                  <span className="mt-0.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="animate-pop mt-0.5 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide">
                     {result &&
                       (ok ? (
                         <Check className="h-3 w-3 text-emerald-600" />
@@ -182,7 +182,7 @@ export function ParseDrill() {
                 disabled={sel == null}
                 onClick={() => assign(r)}
                 className={cn(
-                  'rounded-xl border px-3 py-2 text-sm font-semibold transition-all disabled:opacity-40',
+                  'press rounded-xl border px-3 py-2 text-sm font-semibold disabled:opacity-40',
                   ROLE_STYLE[r],
                   'hover:brightness-95',
                 )}
@@ -195,7 +195,7 @@ export function ParseDrill() {
 
         {/* Kết quả */}
         {result && (
-          <div className="mt-6 space-y-3">
+          <div className="stagger mt-6 space-y-3">
             <div
               className={cn(
                 'rounded-xl p-4',
@@ -214,7 +214,7 @@ export function ParseDrill() {
               </p>
             </div>
 
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <div className="animate-pop-in rounded-xl border border-emerald-200 bg-emerald-50 p-4">
               <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-emerald-700">
                 <Scissors className="h-3.5 w-3.5" /> Lõi câu (bỏ hết phần bổ trợ)
               </p>
@@ -241,7 +241,7 @@ export function ParseDrill() {
           type="button"
           onClick={result ? next : () => void submit()}
           disabled={!result && (!done || busy)}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700 disabled:opacity-50"
+          className="press mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700 disabled:opacity-50"
         >
           {busy && <Loader2 className="h-4 w-4 animate-spin" />}
           {result ? (

@@ -77,7 +77,7 @@ export function CountdownTimer({
 
       <p
         className={cn(
-          'mt-1 text-center font-mono text-4xl font-bold tabular-nums',
+          'mt-1 text-center font-mono text-4xl font-bold tabular-nums transition-colors duration-300',
           color,
           urgency === 'danger' && running && 'animate-pulse',
         )}
@@ -87,7 +87,7 @@ export function CountdownTimer({
 
       <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
         <div
-          className={cn('h-full rounded-full transition-[width] duration-500', barColor)}
+          className={cn('bar-fill h-full rounded-full', barColor)}
           style={{ width: `${Math.max(0, ratio * 100)}%` }}
         />
       </div>

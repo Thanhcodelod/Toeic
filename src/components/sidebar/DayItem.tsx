@@ -22,9 +22,9 @@ export function DayItem({ day, status, isActive, onSelect }: DayItemProps) {
       onClick={() => onSelect(day.day)}
       aria-current={isActive ? 'true' : undefined}
       className={cn(
-        'group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition-colors',
+        'press group flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left',
         isActive
-          ? 'bg-brand-50 ring-1 ring-brand-200'
+          ? 'scale-[1.02] bg-brand-50 shadow-card ring-1 ring-brand-200'
           : 'hover:bg-slate-50',
       )}
     >

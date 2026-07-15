@@ -74,7 +74,7 @@ export function WordFormDrill() {
         <button
           type="button"
           onClick={() => void load()}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white"
+          className="press mt-3 inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2 text-sm font-bold text-white"
         >
           <RotateCcw className="h-4 w-4" /> Thử lại
         </button>
@@ -129,7 +129,7 @@ export function WordFormDrill() {
                     <span className="text-xs font-normal text-slate-400">{s.hint}</span>
                   )}
                 </label>
-                <div className="relative mt-1">
+                <div className={cn('relative mt-1', r && !r.ok && 'animate-shake')}>
                   <input
                     type="text"
                     value={answers[s.form] ?? ''}
@@ -153,16 +153,16 @@ export function WordFormDrill() {
                   {r && (
                     <span className="absolute right-3 top-1/2 -translate-y-1/2">
                       {r.ok ? (
-                        <Check className="h-5 w-5 text-emerald-600" />
+                        <Check className="h-5 w-5 animate-pop text-emerald-600" />
                       ) : (
-                        <X className="h-5 w-5 text-rose-600" />
+                        <X className="h-5 w-5 animate-pop text-rose-600" />
                       )}
                     </span>
                   )}
                 </div>
 
                 {r && (
-                  <div className="mt-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs">
+                  <div className="animate-fade-slide-down mt-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs">
                     <p className="text-slate-700">
                       <span className="font-semibold">Chấp nhận:</span>{' '}
                       {r.answers.map((a, i) => (
@@ -185,7 +185,7 @@ export function WordFormDrill() {
         {result && (
           <div
             className={cn(
-              'mt-5 rounded-xl p-4 text-center',
+              'animate-pop-in mt-5 rounded-xl p-4 text-center',
               result.pct >= 80 ? 'bg-emerald-50' : 'bg-amber-50',
             )}
           >
@@ -204,7 +204,7 @@ export function WordFormDrill() {
           type="button"
           onClick={result ? next : () => void submit()}
           disabled={!result && (!filled || busy)}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700 disabled:opacity-50"
+          className="press mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700 disabled:opacity-50"
         >
           {busy && <Loader2 className="h-4 w-4 animate-spin" />}
           {result ? (

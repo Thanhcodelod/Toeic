@@ -12,7 +12,7 @@ export function TheoryTab({ content }: TheoryTabProps) {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
       {/* Theory */}
-      <article className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
+      <article className="animate-fade-in rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
         <div className="markdown-body">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {content.theoryMarkdown}
@@ -27,9 +27,11 @@ export function TheoryTab({ content }: TheoryTabProps) {
             <Sparkles className="h-4 w-4 text-amber-500" />
             Lưu ý &amp; mẹo TOEIC
           </div>
-          {content.tips.map((tip, index) => (
-            <Callout key={index} text={tip} />
-          ))}
+          <div className="stagger space-y-3">
+            {content.tips.map((tip, index) => (
+              <Callout key={index} text={tip} />
+            ))}
+          </div>
         </aside>
       )}
     </div>

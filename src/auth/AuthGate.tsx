@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { AlertTriangle, Loader2 } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { EmptyState } from '../components/common/EmptyState'
 import { AuthScreen } from './AuthScreen'
@@ -28,12 +28,26 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }
 
   if (status === 'loading') {
+    // Khung xương hình dạng đúng thẻ đăng nhập — êm hơn spinner trần, tránh
+    // "nhấp nháy" bố cục khi phiên đăng nhập được giải quyết.
     return (
-      <div className="min-h-screen grid place-items-center bg-slate-50 text-slate-400">
-        <span className="inline-flex items-center gap-2">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          Đang tải…
-        </span>
+      <div className="min-h-screen grid place-items-center bg-slate-50 px-4">
+        <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-card animate-fade-in">
+          <div className="flex items-center gap-2.5">
+            <div className="skeleton h-10 w-10 rounded-xl" />
+            <div className="flex-1 space-y-2">
+              <div className="skeleton h-3.5 w-44 rounded" />
+              <div className="skeleton h-3 w-28 rounded" />
+            </div>
+          </div>
+          <div className="skeleton mt-6 h-10 w-full rounded-xl" />
+          <div className="mt-5 space-y-4">
+            <div className="skeleton h-11 w-full rounded-xl" />
+            <div className="skeleton h-11 w-full rounded-xl" />
+            <div className="skeleton h-11 w-full rounded-xl" />
+          </div>
+          <span className="sr-only">Đang tải…</span>
+        </div>
       </div>
     )
   }

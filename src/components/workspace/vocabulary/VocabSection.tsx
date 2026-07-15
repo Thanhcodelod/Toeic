@@ -41,7 +41,7 @@ export function VocabSection({ cards, onLessonComplete }: VocabSectionProps) {
                 type="button"
                 onClick={() => setTab(t.id)}
                 className={cn(
-                  'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-all',
+                  'press inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium',
                   tab === t.id
                     ? 'bg-white text-violet-700 shadow-card'
                     : 'text-slate-500 hover:text-slate-700',
@@ -55,11 +55,15 @@ export function VocabSection({ cards, onLessonComplete }: VocabSectionProps) {
         </div>
       </div>
 
-      {tab === 'learn' && (
-        <VocabLearnSession cards={cards} onLessonComplete={onLessonComplete} />
-      )}
-      {tab === 'browse' && <FlashcardDeck cards={cards} />}
-      {tab === 'quiz' && <VocabQuiz cards={cards} />}
+      {/* key={tab} => bảng nội dung trượt vào MỘT LẦN mỗi khi đổi tab, không lặp
+          lại khi các state con thay đổi. */}
+      <div key={tab} className="animate-fade-slide-up">
+        {tab === 'learn' && (
+          <VocabLearnSession cards={cards} onLessonComplete={onLessonComplete} />
+        )}
+        {tab === 'browse' && <FlashcardDeck cards={cards} />}
+        {tab === 'quiz' && <VocabQuiz cards={cards} />}
+      </div>
     </div>
   )
 }

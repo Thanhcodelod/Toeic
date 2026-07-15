@@ -86,7 +86,7 @@ export function AudioPlayer({ src, title = 'Audio bài nghe' }: AudioPlayerProps
           <button
             type="button"
             onClick={toggle}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-600 text-white shadow-card transition-colors hover:bg-brand-700"
+            className="press grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-600 text-white shadow-card hover:bg-brand-700"
             aria-label={playing ? 'Tạm dừng' : 'Phát'}
           >
             {playing ? (

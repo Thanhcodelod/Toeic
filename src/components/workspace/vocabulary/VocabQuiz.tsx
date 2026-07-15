@@ -331,7 +331,7 @@ export function VocabQuiz({
           <button
             type="button"
             onClick={() => start()}
-            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700"
+            className="press mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700"
           >
             Bắt đầu kiểm tra
           </button>
@@ -345,10 +345,10 @@ export function VocabQuiz({
     const pct = Math.round((correctCount / Math.max(1, questions.length)) * 100)
     return (
       <div className="mx-auto max-w-2xl">
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+        <div className="animate-pop-in overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
           <div className="flex flex-col items-center gap-3 bg-gradient-to-br from-violet-600 to-violet-800 p-8 text-center text-white">
-            <Trophy className="h-10 w-10" />
-            <p className="text-4xl font-bold tabular-nums">{pct}%</p>
+            <Trophy className="h-10 w-10 animate-trophy-in" />
+            <p className="animate-pop text-4xl font-bold tabular-nums">{pct}%</p>
             <p className="text-sm text-violet-100">
               Đúng {correctCount}/{questions.length} câu · đã lưu tiến trình
             </p>
@@ -357,7 +357,7 @@ export function VocabQuiz({
             <button
               type="button"
               onClick={() => (autoStart ? start() : setPhase('setup'))}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="press inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               <RotateCcw className="h-4 w-4" />
               Lượt mới
@@ -366,7 +366,7 @@ export function VocabQuiz({
               <button
                 type="button"
                 onClick={() => start(wrongCards)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-violet-700"
+                className="press inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-violet-700"
               >
                 Ôn lại {wrongCards.length} từ sai
               </button>
@@ -375,7 +375,7 @@ export function VocabQuiz({
               <button
                 type="button"
                 onClick={onExit}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-900"
+                className="press inline-flex items-center gap-1.5 rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-900"
               >
                 Kết thúc
               </button>
@@ -405,7 +405,10 @@ export function VocabQuiz({
         </span>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+      <div
+        key={idx}
+        className="animate-fade-slide-up rounded-2xl border border-slate-200 bg-white p-6 shadow-card"
+      >
         {/* Prompt by mode */}
         {q.mode === 'tf' ? (
           <div className="py-2 text-center">
@@ -492,7 +495,7 @@ export function VocabQuiz({
                 checked
                   ? isCorrect
                     ? 'border-emerald-400 bg-emerald-50 text-emerald-800'
-                    : 'border-rose-400 bg-rose-50 text-rose-800'
+                    : 'animate-shake border-rose-400 bg-rose-50 text-rose-800'
                   : 'border-slate-200 focus:border-violet-500',
               )}
             />
@@ -508,6 +511,7 @@ export function VocabQuiz({
             className={cn(
               'mt-5 grid gap-2',
               q.mode === 'tf' ? 'grid-cols-2' : 'sm:grid-cols-2',
+              checked && !isCorrect && 'animate-shake',
             )}
           >
             {q.options.map((opt) => {
@@ -521,7 +525,7 @@ export function VocabQuiz({
                   disabled={checked}
                   onClick={() => setPickedOpt(opt)}
                   className={cn(
-                    'flex items-center gap-2 rounded-xl border px-4 py-3 text-left text-sm transition-all',
+                    'press flex items-center gap-2 rounded-xl border px-4 py-3 text-left text-sm transition-all',
                     showCorrect && 'border-emerald-400 bg-emerald-50',
                     showWrong && 'border-rose-400 bg-rose-50',
                     !checked && isPicked && 'border-violet-500 bg-violet-50 ring-1 ring-violet-200',
@@ -529,7 +533,7 @@ export function VocabQuiz({
                     checked && !showCorrect && !showWrong && 'opacity-60',
                   )}
                 >
-                  {showCorrect && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
+                  {showCorrect && <Check className="h-4 w-4 shrink-0 animate-pop text-emerald-600" />}
                   {showWrong && <X className="h-4 w-4 shrink-0 text-rose-600" />}
                   <span className="text-slate-800">{opt}</span>
                 </button>
@@ -562,7 +566,7 @@ export function VocabQuiz({
               type="button"
               onClick={submit}
               disabled={!canSubmit}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700 disabled:opacity-50"
+              className="press inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-violet-700 disabled:opacity-50"
             >
               Kiểm tra
             </button>
@@ -571,7 +575,7 @@ export function VocabQuiz({
               type="button"
               onClick={next}
               className={cn(
-                'inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-card',
+                'press inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-card',
                 isCorrect ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-slate-700 hover:bg-slate-800',
               )}
             >

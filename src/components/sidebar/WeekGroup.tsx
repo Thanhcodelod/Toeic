@@ -38,11 +38,11 @@ export function WeekGroup({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
+        className="press flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
       >
         <ChevronDown
           className={cn(
-            'h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200',
+            'h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 ease-smooth',
             open ? 'rotate-0' : '-rotate-90',
           )}
         />
@@ -67,7 +67,7 @@ export function WeekGroup({
       </button>
 
       {open && (
-        <div className="space-y-1 px-2 pb-3">
+        <div className="stagger space-y-1 px-2 pb-3">
           {days.map((day) => (
             <DayItem
               key={day.day}

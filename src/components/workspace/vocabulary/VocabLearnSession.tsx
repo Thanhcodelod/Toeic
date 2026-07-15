@@ -65,6 +65,9 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
   const [words, setWords] = useState<Record<string, WordState>>({})
   const [plan, setPlan] = useState<Plan | null>(null)
   const [finished, setFinished] = useState(false)
+  /** Đếm câu hỏi — CHỈ tăng khi sang câu mới. Dùng làm `key` cho thẻ câu hỏi để
+   *  hiệu ứng vào chạy đúng MỘT LẦN mỗi câu, không lặp lại lúc đang gõ. */
+  const [stepSeq, setStepSeq] = useState(0)
 
   const [picked, setPicked] = useState<string | null>(null)
   const [typed, setTyped] = useState('')
@@ -153,6 +156,7 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
         stepRef.current = null
         setFinished(true)
       }
+      setStepSeq((n) => n + 1)
       resetPrompt()
     },
     [cards],
@@ -295,9 +299,24 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
   }, [step, checked, finished, loading, primary])
 
   if (loading) {
+    // Khung xương theo đúng hình hài bài học (đỡ giật hơn spinner trơ).
     return (
-      <div className="flex items-center justify-center gap-2 py-24 text-slate-400">
-        <Loader2 className="h-5 w-5 animate-spin" /> Đang tải tiến trình ghi nhớ…
+      <div className="mx-auto max-w-2xl space-y-4" aria-busy="true" aria-live="polite">
+        <span className="sr-only">Đang tải tiến trình ghi nhớ…</span>
+        <div className="skeleton h-14 rounded-2xl" />
+        <div className="skeleton h-2 w-full rounded-full" />
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+          <div className="skeleton mx-auto h-6 w-24 rounded-full" />
+          <div className="skeleton mx-auto mt-4 h-10 w-48 rounded-xl" />
+          <div className="skeleton mx-auto mt-3 h-5 w-32 rounded-lg" />
+          <div className="mt-6 grid gap-2 sm:grid-cols-2">
+            <div className="skeleton h-16 rounded-xl" />
+            <div className="skeleton h-16 rounded-xl" />
+            <div className="skeleton h-16 rounded-xl" />
+            <div className="skeleton h-16 rounded-xl" />
+          </div>
+          <div className="skeleton mt-5 h-12 w-full rounded-xl" />
+        </div>
       </div>
     )
   }
@@ -326,14 +345,14 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
       <div className="mx-auto max-w-2xl">
         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
           <div className="flex flex-col items-center gap-2 bg-gradient-to-br from-emerald-600 to-emerald-800 p-8 text-center text-white">
-            <Trophy className="h-10 w-10" />
+            <Trophy className="h-10 w-10 animate-trophy-in" />
             <p className="text-3xl font-bold">Đã thuộc {cards.length} từ!</p>
             <p className="text-sm text-emerald-100">
               Mỗi từ đều đã vượt qua đủ số dạng kiểm tra khác nhau
             </p>
           </div>
           <div className="p-5">
-            <div className="mb-4 grid gap-2 sm:grid-cols-2">
+            <div className="stagger mb-4 grid gap-2 sm:grid-cols-2">
               {cards.map((c) => {
                 const w = words[c.id] ?? { level: 0 as VocabLevel, kinds: [] }
                 return (
@@ -421,7 +440,7 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
       <div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-[width] duration-500"
+            className="bar-fill h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600"
             style={{ width: `${pct}%` }}
           />
         </div>
@@ -452,7 +471,15 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
+      {/* key={stepSeq} => thẻ câu hỏi trượt/nở vào ĐÚNG MỘT LẦN mỗi câu; khi đang
+          gõ (component re-render liên tục) key giữ nguyên nên hiệu ứng KHÔNG lặp. */}
+      <div
+        key={stepSeq}
+        className={cn(
+          'rounded-2xl border border-slate-200 bg-white p-6 shadow-card',
+          isIntro ? 'animate-pop-in' : 'animate-fade-slide-up',
+        )}
+      >
         {/* ---------------- LÀM QUEN TỪ MỚI ---------------- */}
         {isIntro ? (
           <div className="text-center">
@@ -547,13 +574,19 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
                     checked
                       ? wasCorrect
                         ? 'border-emerald-400 bg-emerald-50 text-emerald-800'
-                        : 'border-rose-400 bg-rose-50 text-rose-800'
+                        : 'animate-shake border-rose-400 bg-rose-50 text-rose-800'
                       : 'border-slate-200 focus:border-violet-500',
                   )}
                 />
               </div>
             ) : (
-              <div className={cn('mt-5 grid gap-2', isTF ? 'grid-cols-2' : 'sm:grid-cols-2')}>
+              <div
+                className={cn(
+                  'mt-5 grid gap-2',
+                  isTF ? 'grid-cols-2' : 'sm:grid-cols-2',
+                  checked && !wasCorrect && 'animate-shake',
+                )}
+              >
                 {step.options.map((opt, i) => {
                   const isPicked = picked === opt
                   const showCorrect = checked && opt === step.answer
@@ -566,7 +599,7 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
                       disabled={checked}
                       onClick={() => setPicked(opt)}
                       className={cn(
-                        'flex flex-col gap-2 rounded-xl border px-4 py-3 text-left text-sm transition-all',
+                        'press flex flex-col gap-2 rounded-xl border px-4 py-3 text-left text-sm',
                         isTF && 'items-center justify-center text-base font-semibold',
                         showCorrect && 'border-emerald-400 bg-emerald-50',
                         showWrong && 'border-rose-400 bg-rose-50',
@@ -576,7 +609,9 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
                       )}
                     >
                       <span className="flex items-center gap-1.5 text-slate-800">
-                        {showCorrect && <Check className="h-4 w-4 shrink-0 text-emerald-600" />}
+                        {showCorrect && (
+                          <Check className="h-4 w-4 shrink-0 animate-pop text-emerald-600" />
+                        )}
                         {showWrong && <X className="h-4 w-4 shrink-0 text-rose-600" />}
                         {form && (
                           <span className="italic text-slate-500">
@@ -596,7 +631,7 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
             {checked && (
               <div
                 className={cn(
-                  'mt-4 rounded-xl p-4 text-sm',
+                  'mt-4 rounded-xl p-4 text-sm animate-fade-slide-up',
                   wasCorrect ? 'bg-emerald-50' : 'bg-rose-50',
                 )}
               >
@@ -626,7 +661,7 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
                 </div>
 
                 {justPassed && (
-                  <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-bold text-emerald-700">
+                  <p className="mt-2 flex animate-pop items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-bold text-emerald-700">
                     <Sprout className="h-4 w-4" />
                     “{card.word}” đã qua {need} dạng → lên “{LEVEL_NAME[1]}” · ôn lại
                     sau {LEVEL_INTERVAL[1]}
@@ -647,7 +682,8 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
 
         {/* ---- Lưu thất bại: chặn đi tiếp cho tới khi DB nhận được câu này ---- */}
         {saveError && (
-          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-rose-300 bg-rose-50 p-3">
+          <div className="animate-fade-slide-down">
+          <div className="mt-4 flex animate-shake flex-wrap items-center gap-3 rounded-xl border border-rose-300 bg-rose-50 p-3">
             <AlertTriangle className="h-5 w-5 shrink-0 text-rose-600" />
             <p className="flex-1 text-sm font-medium text-rose-800">
               Không lưu được câu trả lời — kiểm tra kết nối. Bài học chỉ đi tiếp khi
@@ -667,6 +703,7 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
               Thử lại
             </button>
           </div>
+          </div>
         )}
 
         {/* ---------------- HÀNH ĐỘNG ---------------- */}
@@ -675,7 +712,7 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
           onClick={primary}
           disabled={!canSubmit || (checked && (saving || !!saveError))}
           className={cn(
-            'mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-card transition-colors disabled:opacity-50',
+            'press mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white shadow-card disabled:opacity-50',
             checked && !wasCorrect
               ? 'bg-slate-700 hover:bg-slate-800'
               : 'bg-violet-600 hover:bg-violet-700',

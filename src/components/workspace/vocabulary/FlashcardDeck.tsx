@@ -71,7 +71,7 @@ export function FlashcardDeck({ cards: initialCards }: FlashcardDeckProps) {
           <button
             type="button"
             onClick={shuffle}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            className="press inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
           >
             <Shuffle className="h-4 w-4" />
             Xáo trộn
@@ -79,7 +79,7 @@ export function FlashcardDeck({ cards: initialCards }: FlashcardDeckProps) {
           <button
             type="button"
             onClick={restart}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            className="press inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
           >
             <RotateCw className="h-4 w-4" />
             Về đầu
@@ -101,7 +101,7 @@ export function FlashcardDeck({ cards: initialCards }: FlashcardDeckProps) {
           type="button"
           onClick={goPrev}
           disabled={atStart}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-card enabled:hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="press inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-card enabled:hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           <ChevronLeft className="h-4 w-4" />
           Trước
@@ -119,7 +119,7 @@ export function FlashcardDeck({ cards: initialCards }: FlashcardDeckProps) {
                 setFlipped(false)
               }}
               className={cn(
-                'h-2 rounded-full transition-all',
+                'h-2 rounded-full transition-colors',
                 i === index
                   ? 'w-5 bg-violet-500'
                   : 'w-2 bg-slate-300 hover:bg-slate-400',
@@ -132,7 +132,7 @@ export function FlashcardDeck({ cards: initialCards }: FlashcardDeckProps) {
           type="button"
           onClick={goNext}
           disabled={atEnd}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-card enabled:hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="press inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-card enabled:hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Sau
           <ChevronRight className="h-4 w-4" />

@@ -15,7 +15,7 @@ export function Callout({ text }: CalloutProps) {
   const body = hasLabel ? text.slice(separator + 1).trim() : text
 
   return (
-    <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+    <div className="lift flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
       <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-amber-500" />
       <p className="text-sm leading-relaxed text-amber-900">
         {label && <span className="font-bold">{label}: </span>}

@@ -45,8 +45,9 @@ export function StatusBadge({ status, dotOnly, className }: StatusBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium',
+        'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium transition-colors duration-200',
         config.className,
+        status === 'done' && 'animate-pop',
         className,
       )}
     >

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { AlertTriangle, Loader2, RotateCcw } from 'lucide-react'
+import { AlertTriangle, RotateCcw } from 'lucide-react'
 import { WeekGroup } from './WeekGroup'
 import type { DaySummary } from '../../data/types'
 import type { UseProgress } from '../../hooks/useProgress'
@@ -50,7 +50,7 @@ export function Sidebar({
           type="button"
           onClick={handleReset}
           disabled={progress.loading}
-          className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
+          className="press inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-slate-400 hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed disabled:opacity-50"
           title="Đặt lại tiến độ"
         >
           <RotateCcw className="h-3 w-3" />
@@ -59,9 +59,11 @@ export function Sidebar({
       </div>
 
       {loading && (
-        <div className="flex items-center gap-2 px-4 py-6 text-sm text-slate-400">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Đang tải danh sách ngày…
+        <div className="space-y-2 px-3 py-4">
+          <span className="sr-only">Đang tải danh sách ngày…</span>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="skeleton h-11 w-full" aria-hidden="true" />
+          ))}
         </div>
       )}
 

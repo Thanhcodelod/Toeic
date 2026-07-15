@@ -63,9 +63,9 @@ export function ExamAnswerGrid({
                         aria-label={`Câu ${it.qNumber} chọn ${k}`}
                         aria-pressed={isSel}
                         className={cn(
-                          'grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs font-bold transition-colors',
+                          'press grid h-7 w-7 shrink-0 place-items-center rounded-full border text-xs font-bold',
                           isSel
-                            ? 'border-brand-600 bg-brand-600 text-white'
+                            ? 'scale-110 border-brand-600 bg-brand-600 text-white'
                             : 'border-slate-300 text-slate-500 enabled:hover:border-brand-400 enabled:hover:bg-brand-50',
                           disabled && 'opacity-60',
                         )}

@@ -276,7 +276,7 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
   // ---- Views ----------------------------------------------------------------
   const intro = (
     <div className="mx-auto max-w-2xl">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
+      <div className="animate-pop-in rounded-2xl border border-slate-200 bg-white p-6 shadow-card sm:p-8">
         <h2 className="text-xl font-bold text-slate-900">{content.title}</h2>
         <p className="mt-1 text-sm text-slate-500">
           {content.mode === 'full'
@@ -327,7 +327,7 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
         <button
           type="button"
           onClick={startExam}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-brand-700"
+          className="press mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-brand-700"
         >
           <PlayCircle className="h-5 w-5" />
           Bắt đầu làm bài
@@ -341,7 +341,7 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
     : 'h-[76vh] min-h-[540px]'
 
   const doing = (
-    <div className="space-y-4">
+    <div className="animate-fade-in space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         {sections.length > 1 && (
           <div className="inline-flex gap-1 rounded-xl bg-slate-100 p-1">
@@ -351,7 +351,7 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
                 type="button"
                 onClick={() => setActiveKey(s.key)}
                 className={cn(
-                  'rounded-lg px-4 py-2 text-sm font-medium transition-all',
+                  'press rounded-lg px-4 py-2 text-sm font-medium',
                   s.key === activeKey
                     ? 'bg-white text-brand-700 shadow-card'
                     : 'text-slate-500 hover:text-slate-700',
@@ -366,7 +366,7 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
           <button
             type="button"
             onClick={stopExam}
-            className="ml-auto inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            className="press ml-auto inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
             title="Thoát toàn màn hình (dừng bài thi)"
           >
             <Minimize2 className="h-4 w-4" />
@@ -414,7 +414,7 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
             <button
               type="button"
               onClick={handleSubmitClick}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-brand-700"
+              className="press inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-brand-700"
             >
               <Send className="h-4 w-4" />
               Nộp bài
@@ -445,7 +445,7 @@ export function ExamView({ dayNumber, content, progress }: ExamViewProps) {
     >
       {hydrating ? (
         <div className="flex items-center justify-center gap-2 py-24 text-slate-400">
-          <Loader2 className="h-5 w-5 animate-spin" /> Dang tai bai lam...
+          <Loader2 className="h-5 w-5 animate-spin" /> Đang tải bài làm…
         </div>
       ) : null}
       {!hydrating && phase === 'intro' && intro}

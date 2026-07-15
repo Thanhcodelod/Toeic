@@ -205,7 +205,7 @@ export function PracticeView({
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+    <div className="grid animate-fade-slide-up gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
       {/* Left: media (optional) + questions */}
       <div className="space-y-4">
         {content.audioUrl && <AudioPlayer src={content.audioUrl} />}
@@ -280,7 +280,7 @@ export function PracticeView({
                     key={q.id}
                     href={`#cau-${index + 1}`}
                     className={cn(
-                      'grid h-9 place-items-center rounded-lg text-sm font-semibold transition-colors',
+                      'press grid h-9 place-items-center rounded-lg text-sm font-semibold',
                       done
                         ? 'bg-brand-600 text-white'
                         : 'bg-slate-100 text-slate-500 hover:bg-slate-200',
@@ -301,7 +301,7 @@ export function PracticeView({
             <button
               type="button"
               onClick={handleSubmitClick}
-              className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-card transition-colors hover:bg-brand-700"
+              className="press mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-bold text-white shadow-card hover:bg-brand-700"
             >
               <Send className="h-4 w-4" />
               Nộp bài

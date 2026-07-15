@@ -23,6 +23,132 @@
 }
 
 @layer components {
+  /* =========================================================================
+     HỆ THỐNG CHUYỂN ĐỘNG — các tiện ích dùng chung
+     Chỉ động vào `transform` / `opacity` để trình duyệt chạy trên GPU.
+     ========================================================================= */
+
+  /* Hai keyframe này CHỈ được .skeleton và .ripple-ring dùng qua CSS thô (không
+     qua class animate-*), nên phải tự khai báo ở đây — nếu để Tailwind sinh thì
+     nó chỉ xuất khi thấy class animate-shimmer/animate-ripple trong JSX, mà ta
+     không dùng, dẫn tới keyframe biến mất và hiệu ứng im lặng không chạy. */
+  @keyframes shimmer {
+    from {
+      transform: translate3d(-100%, 0, 0);
+    }
+    to {
+      transform: translate3d(200%, 0, 0);
+    }
+  }
+  @keyframes ripple {
+    from {
+      opacity: 0.45;
+      transform: scale(0.85);
+    }
+    to {
+      opacity: 0;
+      transform: scale(1.7);
+    }
+  }
+
+  /* Danh sách hiện ra SO LE: con thứ n vào chậm hơn con thứ n-1 một nhịp.
+     Dùng cho sidebar ngày học, lưới thẻ, danh sách kết quả. */
+  .stagger > * {
+    animation: fade-slide-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  .stagger > *:nth-child(1)  { animation-delay: 0ms }
+  .stagger > *:nth-child(2)  { animation-delay: 35ms }
+  .stagger > *:nth-child(3)  { animation-delay: 70ms }
+  .stagger > *:nth-child(4)  { animation-delay: 105ms }
+  .stagger > *:nth-child(5)  { animation-delay: 140ms }
+  .stagger > *:nth-child(6)  { animation-delay: 175ms }
+  .stagger > *:nth-child(7)  { animation-delay: 210ms }
+  .stagger > *:nth-child(8)  { animation-delay: 245ms }
+  .stagger > *:nth-child(9)  { animation-delay: 280ms }
+  .stagger > *:nth-child(10) { animation-delay: 315ms }
+  .stagger > *:nth-child(n + 11) { animation-delay: 350ms }
+
+  /* Bấm vào là LÚN xuống — phản hồi xúc giác cho mọi nút bấm. */
+  .press {
+    transition:
+      transform 0.14s cubic-bezier(0.34, 1.4, 0.64, 1),
+      box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      color 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .press:active:not(:disabled) {
+    transform: scale(0.96);
+  }
+
+  /* Rê chuột vào là NHẤC thẻ lên. */
+  .lift {
+    transition:
+      transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .lift:hover {
+    transform: translate3d(0, -3px, 0);
+    @apply shadow-card-lg;
+  }
+  .lift:active {
+    transform: translate3d(0, -1px, 0) scale(0.99);
+  }
+
+  /* Khung xương lấp lánh — thay cho ô trống lúc đang tải. */
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-slate-200/70;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.65),
+      transparent
+    );
+    animation: shimmer 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  /* Thanh tiến độ: bề rộng chạy mượt + vệt sáng lướt qua phần đã đầy. */
+  .bar-fill {
+    position: relative;
+    overflow: hidden;
+    transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .bar-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.45),
+      transparent
+    );
+    animation: shimmer 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  }
+
+  /* Vòng sáng lan ra sau một huy hiệu/dấu tick vừa xuất hiện. */
+  .ripple-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 9999px;
+    animation: ripple 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+    pointer-events: none;
+  }
+
+  /* Gạch chân của tab TRƯỢT từ tab cũ sang tab mới. */
+  .tab-underline {
+    transition:
+      transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      width 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
   /* ---- 3D flip card ---- */
   .card-3d {
     perspective: 1400px;
@@ -123,7 +249,9 @@
   @apply bg-slate-50;
 }
 
-/* ---- Respect reduced motion ---- */
+/* ---- Tôn trọng "giảm chuyển động" của hệ điều hành ----
+   Người bị say chuyển động / rối loạn tiền đình bật cờ này. Khi đó MỌI hiệu ứng
+   phải tắt — nội dung vẫn hiện đủ, chỉ là hiện ngay lập tức. */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -133,9 +261,20 @@
   *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.001ms !important;
   }
   .card-3d-inner {
     transition: none !important;
+  }
+  .skeleton::after,
+  .bar-fill::after,
+  .ripple-ring {
+    display: none !important;
+  }
+  .press:active:not(:disabled),
+  .lift:hover,
+  .lift:active {
+    transform: none !important;
   }
 }

@@ -136,7 +136,7 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
                 <button
                   type="button"
                   onClick={() => void refreshStats()}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                  className="press inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
                   Làm mới
@@ -144,14 +144,23 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
               </div>
 
               {statsLoading && !stats ? (
-                <div className="flex items-center gap-2 py-6 text-slate-400">
-                  <Loader2 className="h-5 w-5 animate-spin" /> Đang tải…
+                <div aria-hidden className="mt-4">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className="skeleton h-[68px]" />
+                    <div className="skeleton h-[68px]" />
+                    <div className="skeleton h-[68px]" />
+                    <div className="skeleton h-[68px]" />
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <div className="skeleton h-3 w-28" />
+                    <div className="skeleton h-2.5 w-full rounded-full" />
+                  </div>
                 </div>
               ) : error ? (
                 <p className="mt-3 text-sm text-rose-600">{error}</p>
               ) : stats ? (
                 <>
-                  <div className="mt-4 grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
+                  <div className="stagger mt-4 grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
                     <div className="rounded-xl bg-slate-50 p-3">
                       <p className="text-2xl font-bold text-slate-900">
                         {stats.total}
@@ -184,7 +193,7 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
                     </div>
                     <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-200">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-[width] duration-500"
+                        className="bar-fill h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600"
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -202,7 +211,7 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
                   type="button"
                   onClick={() => setCount(n)}
                   className={
-                    'rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ' +
+                    'press rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors ' +
                     (count === n
                       ? 'border-violet-400 bg-violet-50 text-violet-700'
                       : 'border-slate-200 text-slate-600 hover:bg-slate-50')
@@ -228,7 +237,7 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
                 type="button"
                 disabled={fetching}
                 onClick={() => startBatch('new')}
-                className="group flex flex-col items-start gap-2 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-card transition-all hover:border-violet-300 hover:shadow-card-lg disabled:opacity-60"
+                className="group lift press flex flex-col items-start gap-2 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-card hover:border-violet-300 disabled:opacity-60"
               >
                 <span className="grid h-11 w-11 place-items-center rounded-xl bg-violet-100 text-violet-700">
                   <GraduationCap className="h-6 w-6" />
@@ -245,7 +254,7 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
                 type="button"
                 disabled={fetching}
                 onClick={() => startBatch('review')}
-                className="group flex flex-col items-start gap-2 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-card transition-all hover:border-violet-300 hover:shadow-card-lg disabled:opacity-60"
+                className="group lift press flex flex-col items-start gap-2 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-card hover:border-violet-300 disabled:opacity-60"
               >
                 <span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
                   <Sparkles className="h-6 w-6" />
@@ -253,7 +262,7 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
                 <span className="text-base font-bold text-slate-900">
                   Ôn từ đến hạn
                   {stats && stats.due > 0 && (
-                    <span className="ml-1.5 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+                    <span className="ml-1.5 inline-block animate-pop rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
                       {stats.due}
                     </span>
                   )}

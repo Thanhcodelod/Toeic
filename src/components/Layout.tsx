@@ -54,7 +54,7 @@ export function Layout({
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="grid h-9 w-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 lg:hidden"
+            className="press grid h-9 w-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 lg:hidden"
             aria-label="Mở danh sách ngày học"
           >
             <Menu className="h-5 w-5" />
@@ -78,7 +78,7 @@ export function Layout({
             <button
               type="button"
               onClick={onOpenDictation}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
+              className="press inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
             >
               <Headphones className="h-4 w-4" />
               Chép chính tả
@@ -86,7 +86,7 @@ export function Layout({
             <button
               type="button"
               onClick={onOpenVocab}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100"
+              className="press inline-flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-100"
             >
               <BookMarked className="h-4 w-4" />
               Ôn từ vựng
@@ -94,7 +94,7 @@ export function Layout({
             <button
               type="button"
               onClick={onOpenReading}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
+              className="press inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
             >
               <BookOpenCheck className="h-4 w-4" />
               Ôn Reading
@@ -116,7 +116,7 @@ export function Layout({
               type="button"
               onClick={onOpenDictation}
               aria-label="Nghe chép chính tả"
-              className="grid h-9 w-9 place-items-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
+              className="press grid h-9 w-9 place-items-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
             >
               <Headphones className="h-4 w-4" />
             </button>
@@ -124,7 +124,7 @@ export function Layout({
               type="button"
               onClick={onOpenVocab}
               aria-label="Ôn từ vựng"
-              className="grid h-9 w-9 place-items-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100"
+              className="press grid h-9 w-9 place-items-center rounded-lg border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100"
             >
               <BookMarked className="h-4 w-4" />
             </button>
@@ -132,7 +132,7 @@ export function Layout({
               type="button"
               onClick={onOpenReading}
               aria-label="Ôn Reading"
-              className="grid h-9 w-9 place-items-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
+              className="press grid h-9 w-9 place-items-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
             >
               <BookOpenCheck className="h-4 w-4" />
             </button>
@@ -173,7 +173,7 @@ export function Layout({
               onClick={() => setMobileOpen(false)}
               aria-hidden="true"
             />
-            <div className="thin-scrollbar absolute left-0 top-0 h-full w-80 max-w-[85%] overflow-y-auto bg-white shadow-card-lg animate-fade-slide-up">
+            <div className="thin-scrollbar absolute left-0 top-0 h-full w-80 max-w-[85%] overflow-y-auto bg-white shadow-card-lg animate-fade-slide-left">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
                 <span className="text-sm font-semibold text-slate-700">
                   Danh sách ngày học
@@ -181,7 +181,7 @@ export function Layout({
                 <button
                   type="button"
                   onClick={() => setMobileOpen(false)}
-                  className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"
+                  className="press grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-100"
                   aria-label="Đóng"
                 >
                   <X className="h-5 w-5" />

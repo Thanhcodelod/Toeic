@@ -29,12 +29,12 @@ export function ResultPanel({
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
         <div className="flex flex-col items-center gap-5 bg-gradient-to-br from-brand-600 to-brand-800 p-6 text-white sm:flex-row sm:justify-between sm:p-8">
           <div className="flex items-center gap-4">
-            <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white/15">
+            <div className="grid h-16 w-16 animate-trophy-in place-items-center rounded-2xl bg-white/15">
               <Trophy className="h-8 w-8" />
             </div>
             <div>
               <p className="text-sm text-brand-100">Kết quả bài thi</p>
-              <p className="text-4xl font-bold tabular-nums">{scorePct}%</p>
+              <p className="animate-pop text-4xl font-bold tabular-nums">{scorePct}%</p>
               <p className="text-sm text-brand-100">
                 Đúng {correctCount}/{total} câu
               </p>
@@ -54,7 +54,7 @@ export function ResultPanel({
             <button
               type="button"
               onClick={onRetry}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50"
+              className="press mt-3 inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-brand-50"
             >
               <RotateCcw className="h-4 w-4" />
               Làm lại
@@ -62,7 +62,7 @@ export function ResultPanel({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 divide-x divide-slate-200 text-center">
+        <div className="stagger grid grid-cols-3 divide-x divide-slate-200 text-center">
           <div className="p-3">
             <p className="text-xl font-bold text-slate-900">{total}</p>
             <p className="text-xs text-slate-500">Tổng câu</p>

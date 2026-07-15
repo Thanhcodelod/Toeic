@@ -47,7 +47,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
         aria-haspopup="menu"
         aria-expanded={open}
         className={cn(
-          'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-600 hover:bg-slate-50',
+          'press inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white text-sm text-slate-600 hover:bg-slate-50',
           compact ? 'h-9 w-9 justify-center' : 'px-3 py-2',
         )}
         title={email}
@@ -64,7 +64,7 @@ export function UserMenu({ compact = false }: { compact?: boolean }) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-30 mt-2 w-52 rounded-xl border border-slate-200 bg-white p-1 shadow-card-lg"
+          className="absolute right-0 z-30 mt-2 w-52 origin-top-right rounded-xl border border-slate-200 bg-white p-1 shadow-card-lg animate-fade-slide-down"
         >
           <div className="px-3 py-2">
             {profile?.displayName && (

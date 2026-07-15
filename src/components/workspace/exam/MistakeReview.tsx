@@ -105,8 +105,24 @@ export function MistakeReview({ reviewOfDay, onSelectDay }: MistakeReviewProps) 
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-20 text-slate-400">
-        <Loader2 className="h-5 w-5 animate-spin" /> Đang tải…
+      <div className="mx-auto max-w-2xl space-y-4">
+        {/* Khung xương: mô phỏng thẻ tổng hợp câu sai + thẻ AI trong lúc tải. */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+          <div className="skeleton h-5 w-2/3" />
+          <div className="skeleton mt-3 h-4 w-1/2" />
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            <div className="skeleton h-10" />
+            <div className="skeleton h-10" />
+            <div className="skeleton h-10" />
+            <div className="skeleton h-10" />
+          </div>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card">
+          <div className="skeleton h-5 w-40" />
+          <div className="skeleton mt-3 h-4 w-full" />
+          <div className="skeleton mt-2 h-4 w-5/6" />
+          <div className="skeleton mt-4 h-10 w-56" />
+        </div>
       </div>
     )
   }
@@ -134,7 +150,7 @@ export function MistakeReview({ reviewOfDay, onSelectDay }: MistakeReviewProps) 
         <button
           type="button"
           onClick={() => onSelectDay(reviewOfDay)}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-brand-700"
+          className="press mt-4 inline-flex items-center gap-1.5 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-brand-700"
         >
           Đi tới Ngày {reviewOfDay} <ArrowRight className="h-4 w-4" />
         </button>
@@ -144,8 +160,8 @@ export function MistakeReview({ reviewOfDay, onSelectDay }: MistakeReviewProps) 
 
   if (wrong.length === 0) {
     return (
-      <div className="mx-auto max-w-lg rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center">
-        <CheckCircle2 className="mx-auto h-10 w-10 text-emerald-500" />
+      <div className="mx-auto max-w-lg animate-fade-slide-up rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center">
+        <CheckCircle2 className="mx-auto h-10 w-10 animate-pop text-emerald-500" />
         <h3 className="mt-3 text-base font-bold text-slate-900">
           Không có câu sai nào — tuyệt vời!
         </h3>
@@ -210,7 +226,7 @@ export function MistakeReview({ reviewOfDay, onSelectDay }: MistakeReviewProps) 
             type="button"
             onClick={runAi}
             disabled={aiLoading}
-            className="mt-3 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-brand-700 disabled:opacity-60"
+            className="press mt-3 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-card hover:bg-brand-700 disabled:opacity-60"
           >
             {aiLoading ? (
               <>
@@ -231,7 +247,7 @@ export function MistakeReview({ reviewOfDay, onSelectDay }: MistakeReviewProps) 
         )}
 
         {ai && (
-          <div className="mt-3 space-y-3 text-sm">
+          <div className="stagger mt-3 space-y-3 text-sm">
             {ai.summary && (
               <p className="leading-relaxed text-slate-700">{ai.summary}</p>
             )}

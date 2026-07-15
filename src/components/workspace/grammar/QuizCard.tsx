@@ -48,11 +48,14 @@ export function QuizCard({ question, index, selected, onSelect }: QuizCardProps)
               disabled={answered}
               onClick={() => handleSelect(key)}
               className={cn(
-                'flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm transition-all',
+                // `press` cung cấp mọi transition màu/viền + cái lún khi bấm.
+                // Không dùng `transition-all` để không đụng `transform` với
+                // animate-shake (một thuộc tính chỉ nên có 1 nguồn điều khiển).
+                'press flex items-center gap-3 rounded-xl border px-4 py-3 text-left text-sm',
                 !answered &&
                   'border-slate-200 hover:border-brand-300 hover:bg-brand-50',
                 showAsCorrect && 'border-emerald-400 bg-emerald-50',
-                showAsWrong && 'border-rose-400 bg-rose-50',
+                showAsWrong && 'animate-shake border-rose-400 bg-rose-50',
                 answered &&
                   !showAsCorrect &&
                   !showAsWrong &&
@@ -70,7 +73,7 @@ export function QuizCard({ question, index, selected, onSelect }: QuizCardProps)
                 )}
               >
                 {showAsCorrect ? (
-                  <Check className="h-4 w-4" />
+                  <Check className="h-4 w-4 animate-pop" />
                 ) : showAsWrong ? (
                   <X className="h-4 w-4" />
                 ) : (
@@ -128,7 +131,7 @@ export function QuizCard({ question, index, selected, onSelect }: QuizCardProps)
           </button>
 
           {showExplanation && (
-            <div className="mt-2 space-y-2 rounded-xl bg-slate-50 p-4 text-sm animate-fade-slide-up">
+            <div className="mt-2 origin-top space-y-2 rounded-xl bg-slate-50 p-4 text-sm animate-fade-slide-down">
               <p className="leading-relaxed text-slate-700">
                 {question.explanation}
               </p>

@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import { cn } from '../../../lib/cn'
 import {
   LEVEL_INTERVAL,
@@ -107,9 +108,31 @@ export function LevelRing({
   const c = 2 * Math.PI * r
   const pct = level / MAX_LEVEL
 
+  // Khi một từ LÊN CẤP: cây "lớn lên" và một vòng sáng lan ra sau vòng tròn.
+  // Chỉ kích hoạt khi cấp TĂNG — không chạy lại lúc mới gắn hay khi re-render.
+  const prevLevel = useRef(level)
+  const [grew, setGrew] = useState(false)
+  useEffect(() => {
+    if (level > prevLevel.current) {
+      setGrew(true)
+      const t = setTimeout(() => setGrew(false), 700)
+      prevLevel.current = level
+      return () => clearTimeout(t)
+    }
+    prevLevel.current = level
+  }, [level])
+
   return (
     <div className="flex items-center gap-2">
       <div className="relative shrink-0" style={{ width: size, height: size }}>
+        {grew && (
+          <span
+            className={cn(
+              'ripple-ring border-2',
+              level >= 5 ? 'border-amber-400' : 'border-emerald-400',
+            )}
+          />
+        )}
         <svg width={size} height={size} className="-rotate-90">
           <circle
             cx={size / 2}
@@ -129,12 +152,17 @@ export function LevelRing({
             strokeDasharray={c}
             strokeDashoffset={c * (1 - pct)}
             className={cn(
-              'transition-[stroke-dashoffset] duration-500',
+              'transition-[stroke-dashoffset] duration-500 ease-out',
               level >= 5 ? 'stroke-amber-500' : 'stroke-emerald-500',
             )}
           />
         </svg>
-        <span className="absolute inset-0 grid place-items-center">
+        <span
+          className={cn(
+            'absolute inset-0 grid place-items-center',
+            grew && 'animate-grow',
+          )}
+        >
           <Plant level={level} />
         </span>
       </div>
@@ -167,7 +195,7 @@ export function CheckDots({ done, need }: { done: number; need: number }) {
           key={i}
           className={cn(
             'h-1.5 w-1.5 rounded-full transition-colors',
-            i < done ? 'bg-emerald-500' : 'bg-slate-200',
+            i < done ? 'bg-emerald-500 animate-pop' : 'bg-slate-200',
           )}
         />
       ))}

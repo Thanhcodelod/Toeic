@@ -64,7 +64,7 @@ export function TestQuestion({
                   aria-pressed={isSelected}
                   aria-label={`Đáp án ${key}`}
                   className={cn(
-                    'grid h-12 w-12 place-items-center rounded-full border text-base font-bold transition-all',
+                    'press grid h-12 w-12 place-items-center rounded-full border text-base font-bold',
                     isSelected
                       ? 'border-brand-600 bg-brand-600 text-white ring-2 ring-brand-200'
                       : 'border-slate-300 text-slate-600 enabled:hover:border-brand-400 enabled:hover:bg-brand-50',
@@ -89,7 +89,7 @@ export function TestQuestion({
                 onClick={() => onSelect(key)}
                 aria-pressed={isSelected}
                 className={cn(
-                  'flex items-center gap-3 rounded-xl border px-4 py-2.5 text-left text-sm transition-all',
+                  'press flex items-center gap-3 rounded-xl border px-4 py-2.5 text-left text-sm',
                   isSelected
                     ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-200'
                     : 'border-slate-200 enabled:hover:border-brand-300 enabled:hover:bg-slate-50',

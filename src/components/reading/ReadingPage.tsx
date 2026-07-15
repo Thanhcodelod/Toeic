@@ -75,7 +75,7 @@ export function ReadingPage({ onBack }: Props) {
           <button
             type="button"
             onClick={onBack}
-            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+            className="press inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
           >
             <ArrowLeft className="h-4 w-4" />
             Lộ trình 90 ngày
@@ -97,7 +97,7 @@ export function ReadingPage({ onBack }: Props) {
       <main className="thin-scrollbar flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto mb-5 max-w-3xl">
           {/* Ba dạng bài */}
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="stagger grid gap-2 sm:grid-cols-3">
             {TABS.map((t) => {
               const Icon = t.icon
               const st = stats?.[t.id]
@@ -108,7 +108,7 @@ export function ReadingPage({ onBack }: Props) {
                   type="button"
                   onClick={() => setTab(t.id)}
                   className={cn(
-                    'flex flex-col items-start gap-1 rounded-2xl border p-4 text-left transition-all',
+                    'lift press flex flex-col items-start gap-1 rounded-2xl border p-4 text-left',
                     on
                       ? 'border-sky-400 bg-white shadow-card-lg ring-1 ring-sky-200'
                       : 'border-slate-200 bg-white/60 hover:border-sky-200 hover:bg-white',
@@ -141,7 +141,7 @@ export function ReadingPage({ onBack }: Props) {
             <button
               type="button"
               onClick={() => void refresh()}
-              className="inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              className="press inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-slate-400 hover:bg-slate-100 hover:text-slate-600"
             >
               {loading ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />

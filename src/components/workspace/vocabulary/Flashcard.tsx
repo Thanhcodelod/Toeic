@@ -39,7 +39,7 @@ export function Flashcard({ card, flipped, onFlip }: FlashcardProps) {
           speak(text)
         }}
         aria-label={label}
-        className="inline-grid h-9 w-9 place-items-center rounded-full bg-violet-100 text-violet-700 transition-colors hover:bg-violet-200"
+        className="press inline-grid h-9 w-9 place-items-center rounded-full bg-violet-100 text-violet-700 transition-colors hover:bg-violet-200"
       >
         <Volume2 className="h-4 w-4" />
       </button>
@@ -57,7 +57,7 @@ export function Flashcard({ card, flipped, onFlip }: FlashcardProps) {
           ? `Nghĩa của từ ${card.word}. Nhấn để lật lại.`
           : `Từ ${card.word}. Nhấn để xem nghĩa.`
       }
-      className="card-3d block h-80 w-full cursor-pointer rounded-3xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+      className="card-3d animate-fade-slide-left block h-80 w-full cursor-pointer rounded-3xl text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
     >
       <div className={cn('card-3d-inner', flipped && 'is-flipped')}>
         {/* Front */}
