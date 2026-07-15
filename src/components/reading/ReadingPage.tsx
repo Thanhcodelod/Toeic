@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   ArrowLeft,
   BookOpenCheck,
+  CheckCircle2,
+  ChevronRight,
   Languages,
   Loader2,
   RefreshCw,
@@ -10,7 +12,13 @@ import {
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { UserMenu } from '../../auth/UserMenu'
-import { getReadingStats, type ReadingKind, type ReadingStats } from '../../lib/readingApi'
+import {
+  getReadingLessons,
+  getReadingStats,
+  type ReadingKind,
+  type ReadingLesson,
+  type ReadingStats,
+} from '../../lib/readingApi'
 import { ParseDrill } from './ParseDrill'
 import { WordFormDrill } from './WordFormDrill'
 import { ReverseDrill } from './ReverseDrill'
@@ -46,7 +54,8 @@ const TABS: {
 ]
 
 export function ReadingPage({ onBack }: Props) {
-  const [tab, setTab] = useState<ReadingKind>('parse')
+  const [tab, setTabState] = useState<ReadingKind>('parse')
+  const [lesson, setLesson] = useState<number | null>(null)
   const [stats, setStats] = useState<ReadingStats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -64,6 +73,12 @@ export function ReadingPage({ onBack }: Props) {
   useEffect(() => {
     void refresh()
   }, [refresh])
+
+  // Đổi dạng bài -> về màn chọn bài của dạng đó.
+  const setTab = (id: ReadingKind) => {
+    setTabState(id)
+    setLesson(null)
+  }
 
   const active = TABS.find((t) => t.id === tab)!
   const s = stats?.[tab]
@@ -159,12 +174,146 @@ export function ReadingPage({ onBack }: Props) {
           )}
         </div>
 
-        <div key={tab} className="animate-fade-slide-up">
-          {tab === 'parse' && <ParseDrill />}
-          {tab === 'wordform' && <WordFormDrill />}
-          {tab === 'reverse' && <ReverseDrill />}
+        {/* Chọn bài -> làm bài. Key theo (tab + lesson) để mỗi lần đổi màn trượt vào một lần. */}
+        <div key={`${tab}:${lesson ?? 'list'}`} className="animate-fade-slide-up">
+          {lesson === null ? (
+            <LessonPicker kind={tab} onPick={setLesson} />
+          ) : (
+            <div className="mx-auto max-w-3xl">
+              <button
+                type="button"
+                onClick={() => {
+                  setLesson(null)
+                  void refresh()
+                }}
+                className="press mb-3 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
+              >
+                <ArrowLeft className="h-4 w-4" /> Danh sách bài · {active.label} — Bài {lesson}
+              </button>
+
+              {tab === 'parse' && (
+                <ParseDrill lesson={lesson} onDone={() => { setLesson(null); void refresh() }} />
+              )}
+              {tab === 'wordform' && (
+                <WordFormDrill lesson={lesson} onDone={() => { setLesson(null); void refresh() }} />
+              )}
+              {tab === 'reverse' && (
+                <ReverseDrill lesson={lesson} onDone={() => { setLesson(null); void refresh() }} />
+              )}
+            </div>
+          )}
         </div>
       </main>
+    </div>
+  )
+}
+
+/** Lưới các BÀI (~12 câu) của một dạng, kèm tiến độ từng bài. */
+function LessonPicker({
+  kind,
+  onPick,
+}: {
+  kind: ReadingKind
+  onPick: (lesson: number) => void
+}) {
+  const [lessons, setLessons] = useState<ReadingLesson[] | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let ignore = false
+    setLessons(null)
+    setError(null)
+    getReadingLessons(kind)
+      .then((l) => !ignore && setLessons(l))
+      .catch((e) => !ignore && setError((e as Error).message))
+    return () => {
+      ignore = true
+    }
+  }, [kind])
+
+  if (error) {
+    return (
+      <p className="mx-auto max-w-lg rounded-xl border border-rose-200 bg-rose-50 p-4 text-center text-sm text-rose-700">
+        {error}
+      </p>
+    )
+  }
+  if (!lessons) {
+    return (
+      <div className="mx-auto grid max-w-3xl gap-2 sm:grid-cols-2">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="skeleton h-20 w-full rounded-2xl" />
+        ))}
+        <span className="sr-only">Đang tải danh sách bài…</span>
+      </div>
+    )
+  }
+  if (lessons.length === 0) {
+    return (
+      <p className="py-16 text-center text-sm text-slate-500">
+        Chưa có bài nào. Nội dung sẽ sớm được bổ sung.
+      </p>
+    )
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl">
+      <p className="mb-3 text-center text-sm text-slate-500">
+        Chọn một bài để luyện. Mỗi bài khoảng 12 câu.
+      </p>
+      <div className="stagger grid gap-2 sm:grid-cols-2">
+        {lessons.map((l) => {
+          const complete = l.mastered >= l.total
+          const pct = l.total ? Math.round((l.mastered / l.total) * 100) : 0
+          return (
+            <button
+              key={l.lesson}
+              type="button"
+              onClick={() => onPick(l.lesson)}
+              className={cn(
+                'lift press flex items-center gap-3 rounded-2xl border p-4 text-left',
+                complete
+                  ? 'border-emerald-300 bg-emerald-50/60'
+                  : 'border-slate-200 bg-white hover:border-sky-300',
+              )}
+            >
+              <span
+                className={cn(
+                  'grid h-11 w-11 shrink-0 place-items-center rounded-xl text-sm font-bold',
+                  complete ? 'bg-emerald-100 text-emerald-700' : 'bg-sky-100 text-sky-700',
+                )}
+              >
+                {complete ? <CheckCircle2 className="h-6 w-6 animate-pop" /> : l.lesson}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-slate-900">
+                  Bài {l.lesson}{' '}
+                  <span className="font-normal text-slate-400">
+                    · câu {l.fromNo}–{l.toNo}
+                  </span>
+                </p>
+                <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                  <div
+                    className={cn(
+                      'bar-fill h-full rounded-full',
+                      complete
+                        ? 'bg-gradient-to-r from-emerald-400 to-emerald-600'
+                        : 'bg-gradient-to-r from-sky-400 to-sky-600',
+                    )}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-slate-500">
+                  Đạt{' '}
+                  <span className="font-semibold text-emerald-600">{l.mastered}</span>/
+                  {l.total} · đã làm {l.attempted}
+                </p>
+              </div>
+              <ChevronRight className="h-4 w-4 shrink-0 text-slate-300" />
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

@@ -14,7 +14,12 @@ import {
  * Cho từ gốc, người học tự viết ra danh từ / động từ / tính từ / trạng từ.
  * Server chấp nhận MỌI biến thể đúng (production, product, producer, productivity…).
  */
-export function WordFormDrill() {
+interface DrillProps {
+  lesson: number
+  onDone: () => void
+}
+
+export function WordFormDrill({ lesson, onDone }: DrillProps) {
   const [drills, setDrills] = useState<Drill[] | null>(null)
   const [idx, setIdx] = useState(0)
   const [answers, setAnswers] = useState<Record<string, string>>({})
@@ -26,7 +31,7 @@ export function WordFormDrill() {
     setDrills(null)
     setError(null)
     try {
-      const d = await getWordFormDrills(10)
+      const d = await getWordFormDrills(lesson)
       setDrills(d)
       setIdx(0)
       setAnswers({})
@@ -38,7 +43,8 @@ export function WordFormDrill() {
 
   useEffect(() => {
     void load()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson])
 
   const drill = drills?.[idx]
   const filled = drill ? drill.slots.some((s) => (answers[s.form] ?? '').trim()) : false
@@ -59,7 +65,7 @@ export function WordFormDrill() {
   const next = () => {
     if (!drills) return
     if (idx + 1 >= drills.length) {
-      void load()
+      onDone()
       return
     }
     setIdx(idx + 1)

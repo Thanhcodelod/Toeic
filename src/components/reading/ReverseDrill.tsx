@@ -25,7 +25,12 @@ type Step = 'vi' | 'en' | 'done'
  *   B2. GIẤU câu tiếng Anh đi, chỉ nhìn tiếng Việt và viết lại tiếng Anh.
  *   B3. Server chấm: các từ khoá CẤU TRÚC bắt buộc + độ trùng khớp với câu gốc.
  */
-export function ReverseDrill() {
+interface DrillProps {
+  lesson: number
+  onDone: () => void
+}
+
+export function ReverseDrill({ lesson, onDone }: DrillProps) {
   const [drills, setDrills] = useState<Drill[] | null>(null)
   const [idx, setIdx] = useState(0)
   const [step, setStep] = useState<Step>('vi')
@@ -40,7 +45,7 @@ export function ReverseDrill() {
     setDrills(null)
     setError(null)
     try {
-      const d = await getReverseDrills(10)
+      const d = await getReverseDrills(lesson)
       setDrills(d)
       reset(0)
     } catch (e) {
@@ -59,7 +64,8 @@ export function ReverseDrill() {
 
   useEffect(() => {
     void load()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson])
 
   const drill = drills?.[idx]
 
@@ -80,7 +86,7 @@ export function ReverseDrill() {
   const next = () => {
     if (!drills) return
     if (idx + 1 >= drills.length) {
-      void load()
+      onDone()
       return
     }
     reset(idx + 1)

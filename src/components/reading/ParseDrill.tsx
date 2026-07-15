@@ -12,11 +12,18 @@ import {
   type ParseRole,
 } from '../../lib/readingApi'
 
+interface DrillProps {
+  /** Số bài cần tải (mỗi bài ~12 câu). */
+  lesson: number
+  /** Quay lại màn chọn bài (khi làm hết bài). */
+  onDone: () => void
+}
+
 /**
  * Phân tích thành phần câu. Câu đã được cắt sẵn thành các cụm; người học gán nhãn
  * cho từng cụm. Mục tiêu: nhìn ra lõi S-V-O trong vài giây mà KHÔNG cần dịch.
  */
-export function ParseDrill() {
+export function ParseDrill({ lesson, onDone }: DrillProps) {
   const [drills, setDrills] = useState<Drill[] | null>(null)
   const [idx, setIdx] = useState(0)
   const [labels, setLabels] = useState<Record<number, ParseRole>>({})
@@ -29,7 +36,7 @@ export function ParseDrill() {
     setDrills(null)
     setError(null)
     try {
-      const d = await getParseDrills(10)
+      const d = await getParseDrills(lesson)
       setDrills(d)
       setIdx(0)
       setLabels({})
@@ -42,7 +49,8 @@ export function ParseDrill() {
 
   useEffect(() => {
     void load()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lesson])
 
   const drill = drills?.[idx]
   const done = useMemo(
@@ -74,7 +82,7 @@ export function ParseDrill() {
   const next = () => {
     if (!drills) return
     if (idx + 1 >= drills.length) {
-      void load()
+      onDone() // hết bài -> về màn chọn bài (thấy tiến độ vừa cập nhật)
       return
     }
     const n = idx + 1

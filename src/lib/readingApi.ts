@@ -126,6 +126,17 @@ export interface ReadingStats {
   reverse: KindStats
 }
 
+/** Một BÀI (~12 câu) trong một dạng bài. */
+export interface ReadingLesson {
+  lesson: number
+  total: number
+  attempted: number
+  mastered: number
+  /** Số thứ tự câu đầu/cuối của bài trong toàn kho (để hiển thị "câu 1–12"). */
+  fromNo: number
+  toNo: number
+}
+
 // ---- RPC ---------------------------------------------------------------------
 
 async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
@@ -134,14 +145,19 @@ async function rpc<T>(fn: string, args: Record<string, unknown>): Promise<T> {
   return data as T
 }
 
-export const getParseDrills = (limit = 10) =>
-  rpc<ParseDrill[]>('get_reading_drills', { p_kind: 'parse', p_limit: limit })
+/** Danh sách bài + tiến độ từng bài cho một dạng. */
+export const getReadingLessons = (kind: ReadingKind) =>
+  rpc<ReadingLesson[]>('get_reading_lessons', { p_kind: kind })
 
-export const getWordFormDrills = (limit = 10) =>
-  rpc<WordFormDrill[]>('get_reading_drills', { p_kind: 'wordform', p_limit: limit })
+/** Các câu của MỘT bài, theo thứ tự cố định. */
+export const getParseDrills = (lesson: number) =>
+  rpc<ParseDrill[]>('get_reading_drills', { p_kind: 'parse', p_lesson: lesson })
 
-export const getReverseDrills = (limit = 10) =>
-  rpc<ReverseDrill[]>('get_reading_drills', { p_kind: 'reverse', p_limit: limit })
+export const getWordFormDrills = (lesson: number) =>
+  rpc<WordFormDrill[]>('get_reading_drills', { p_kind: 'wordform', p_lesson: lesson })
+
+export const getReverseDrills = (lesson: number) =>
+  rpc<ReverseDrill[]>('get_reading_drills', { p_kind: 'reverse', p_lesson: lesson })
 
 /** Gửi nhãn từng cụm; SERVER so với đáp án và chấm. */
 export const answerParse = (itemId: number, labels: Record<number, ParseRole>) =>
