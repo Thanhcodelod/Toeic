@@ -41,7 +41,11 @@ export function TestQuestion({
           src={question.imageUrl}
           alt="Ảnh minh hoạ câu hỏi"
           loading="lazy"
-          className="mt-4 max-h-72 w-full rounded-xl object-cover"
+          className="mt-4 max-h-72 w-full rounded-xl bg-slate-100 object-cover"
+          onError={(e) => {
+            // Ảnh hỏng thì ẩn đi thay vì hiện ảnh vỡ.
+            ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+          }}
         />
       )}
 

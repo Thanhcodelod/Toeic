@@ -10,7 +10,6 @@ import {
   Hourglass,
   Layers,
   PencilLine,
-  Sparkles,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
@@ -21,8 +20,6 @@ import { TheoryTab } from './grammar/TheoryTab'
 import { QuizTab } from './grammar/QuizTab'
 import { VocabSection } from './vocabulary/VocabSection'
 import { PracticeView } from './practice/PracticeView'
-import { ExamView } from './exam/ExamView'
-import { MistakeReview } from './exam/MistakeReview'
 import { TOTAL_DAYS } from '../../data/constants'
 import type { Day } from '../../data/types'
 import type { UseProgress } from '../../hooks/useProgress'
@@ -69,16 +66,17 @@ export function DayWorkspace({ day, progress, onSelectDay }: DayWorkspaceProps) 
     })
   }
   if (day.exam) {
+    // Đề thi ETS đầy đủ đã được GỠ (tránh vấn đề bản quyền khi công khai).
+    // Thay bằng hướng dẫn sang mục "Ôn tập Part 1–7" (nội dung nguyên gốc).
     panels.push({
       id: 'exam',
-      label: 'Thi thử',
+      label: 'Luyện tập',
       icon: ClipboardList,
       node: (
-        <ExamView
-          dayNumber={day.day}
-          title={day.title}
-          content={day.exam}
-          progress={progress}
+        <EmptyState
+          icon={ClipboardList}
+          title="Phần thi thử đề đầy đủ đã được thay thế"
+          description="Để tránh vấn đề bản quyền, đề ETS scan đã được gỡ. Hãy luyện theo từng Part với nội dung nguyên gốc, có lời giải chi tiết — mở “Ôn Part 1–7” ở thanh trên cùng."
         />
       ),
     })
@@ -110,19 +108,7 @@ export function DayWorkspace({ day, progress, onSelectDay }: DayWorkspaceProps) 
       ),
     })
   }
-  if (day.reviewOfDay) {
-    panels.push({
-      id: 'review',
-      label: 'Ôn câu sai',
-      icon: Sparkles,
-      node: (
-        <MistakeReview
-          reviewOfDay={day.reviewOfDay}
-          onSelectDay={onSelectDay}
-        />
-      ),
-    })
-  }
+  // "Ôn câu sai" dựa trên đề ETS đã gỡ -> không còn hiển thị.
 
   const [active, setActive] = useState(panels[0]?.id ?? '')
   const activePanel = panels.find((p) => p.id === active) ?? panels[0]

@@ -3,6 +3,7 @@ import {
   BookMarked,
   BookOpenCheck,
   GraduationCap,
+  ListChecks,
   Headphones,
   Menu,
   X,
@@ -24,6 +25,7 @@ interface LayoutProps {
   onOpenVocab: () => void
   onOpenDictation: () => void
   onOpenReading: () => void
+  onOpenParts: () => void
   children: ReactNode
 }
 
@@ -37,6 +39,7 @@ export function Layout({
   onOpenVocab,
   onOpenDictation,
   onOpenReading,
+  onOpenParts,
   children,
 }: LayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -99,6 +102,14 @@ export function Layout({
               <BookOpenCheck className="h-4 w-4" />
               Ôn Reading
             </button>
+            <button
+              type="button"
+              onClick={onOpenParts}
+              className="press inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100"
+            >
+              <ListChecks className="h-4 w-4" />
+              Ôn Part 1–7
+            </button>
             <div className="w-40">
               <ProgressBar
                 value={progress.completionPct}
@@ -135,6 +146,14 @@ export function Layout({
               className="press grid h-9 w-9 place-items-center rounded-lg border border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100"
             >
               <BookOpenCheck className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenParts}
+              aria-label="Ôn Part 1–7"
+              className="press grid h-9 w-9 place-items-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
+            >
+              <ListChecks className="h-4 w-4" />
             </button>
             <UserMenu compact />
           </div>

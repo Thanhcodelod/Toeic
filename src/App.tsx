@@ -4,12 +4,13 @@ import { DayView } from './components/DayView'
 import { VocabReviewPage } from './components/vocab/VocabReviewPage'
 import { DictationPage } from './components/dictation/DictationPage'
 import { ReadingPage } from './components/reading/ReadingPage'
+import { PracticePartsPage } from './components/practice-bank/PracticePartsPage'
 import { purgeLegacyLocalStorage } from './lib/answersApi'
 import { useDays } from './hooks/useDays'
 import { useProgress } from './hooks/useProgress'
 import { TOTAL_DAYS } from './data/constants'
 
-type View = 'course' | 'vocab' | 'dictation' | 'reading'
+type View = 'course' | 'vocab' | 'dictation' | 'reading' | 'parts'
 
 function clampDay(value: number): number {
   if (Number.isNaN(value)) return 1
@@ -25,7 +26,9 @@ function readDayFromUrl(): number {
 function readViewFromUrl(): View {
   if (typeof window === 'undefined') return 'course'
   const v = new URLSearchParams(window.location.search).get('view')
-  return v === 'vocab' || v === 'dictation' || v === 'reading' ? v : 'course'
+  return v === 'vocab' || v === 'dictation' || v === 'reading' || v === 'parts'
+    ? v
+    : 'course'
 }
 
 export default function App() {
@@ -77,6 +80,8 @@ export default function App() {
     content = <DictationPage onBack={() => selectView('course')} />
   } else if (view === 'reading') {
     content = <ReadingPage onBack={() => selectView('course')} />
+  } else if (view === 'parts') {
+    content = <PracticePartsPage onBack={() => selectView('course')} />
   } else {
     content = (
       <Layout
@@ -89,6 +94,7 @@ export default function App() {
         onOpenVocab={() => selectView('vocab')}
         onOpenDictation={() => selectView('dictation')}
         onOpenReading={() => selectView('reading')}
+        onOpenParts={() => selectView('parts')}
       >
         <DayView
           key={selectedDay}
