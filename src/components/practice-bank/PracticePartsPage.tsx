@@ -11,6 +11,7 @@ import { UserMenu } from '../../auth/UserMenu'
 import {
   PARTS,
   PART_META,
+  diffLabel,
   getPtLessons,
   getPtStats,
   type Part,
@@ -189,11 +190,14 @@ function LessonPicker({ part, onPick }: { part: Part; onPick: (l: number) => voi
 
   return (
     <div className="mx-auto max-w-3xl">
-      <p className="mb-3 text-center text-sm text-slate-500">Chọn một bài để luyện.</p>
+      <p className="mb-3 text-center text-sm text-slate-500">
+        Chọn một bài để luyện. Càng về bài cuối, độ khó càng tăng.
+      </p>
       <div className="stagger grid gap-2 sm:grid-cols-2">
         {lessons.map((l) => {
           const complete = l.correct >= l.total
           const pct = l.total ? Math.round((l.correct / l.total) * 100) : 0
+          const diff = diffLabel(l.avgDiff)
           return (
             <button
               key={l.lesson}
@@ -217,10 +221,18 @@ function LessonPicker({ part, onPick }: { part: Part; onPick: (l: number) => voi
                 {complete ? <CheckCircle2 className="h-6 w-6 animate-pop" /> : l.lesson}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold text-slate-900">
-                  Bài {l.lesson}{' '}
+                <p className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                  Bài {l.lesson}
                   <span className="font-normal text-slate-400">
                     · câu {l.fromNo}–{l.toNo}
+                  </span>
+                  <span
+                    className={cn(
+                      'rounded-full px-1.5 py-0.5 text-[10px] font-bold',
+                      diff.cls,
+                    )}
+                  >
+                    {diff.text}
                   </span>
                 </p>
                 <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-slate-200">

@@ -28,6 +28,15 @@ export interface PtLesson {
   correct: number
   fromNo: number
   toNo: number
+  /** Điểm khó trung bình của bài (0–100) — tăng dần về các bài cuối. */
+  avgDiff: number
+}
+
+/** Nhãn độ khó từ điểm trung bình. */
+export function diffLabel(score: number): { text: string; cls: string } {
+  if (score < 40) return { text: 'Dễ', cls: 'bg-emerald-100 text-emerald-700' }
+  if (score < 62) return { text: 'Vừa', cls: 'bg-amber-100 text-amber-700' }
+  return { text: 'Khó', cls: 'bg-rose-100 text-rose-700' }
 }
 
 export interface PtQuestion {
