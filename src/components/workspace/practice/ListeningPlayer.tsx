@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Eye, EyeOff, Headphones, Play, Square } from 'lucide-react'
 import { cn } from '../../../lib/cn'
+import { toSpokenLines } from '../../../lib/speech'
 
 interface ListeningPlayerProps {
   /** The spoken script (may contain "Man:"/"Woman:" speaker labels). */
@@ -17,15 +18,21 @@ interface Line {
 }
 
 function parseLines(script: string): Line[] {
-  return script
-    .split(/\n+/)
-    .map((l) => l.trim())
-    .filter(Boolean)
-    .map((line) => {
-      const m = line.match(/^([A-Za-z][A-Za-z .]{0,14}?)\s*\d*\s*:\s*(.*)$/)
-      if (m && m[2]) return { speaker: m[1].trim().toLowerCase(), text: m[2] }
-      return { speaker: '', text: line }
-    })
+  // Giữ nhãn người nói (để chọn giọng nam/nữ) trước khi toSpokenLines bỏ nó.
+  const rawLines = script.split(/\n+/).map((l) => l.trim()).filter(Boolean)
+  const speakerOf = (line: string): string => {
+    const m = line.match(/^([A-Za-z][A-Za-z .]{0,14}?)\s*\d*\s*:\s*/)
+    return m ? m[1].trim().toLowerCase() : ''
+  }
+  // Nếu script gốc chỉ một dòng (Part 1/2 kiểu cũ có "(A)…(B)…"), toSpokenLines
+  // sẽ tự tách thành từng câu -> mỗi câu một utterance riêng, có ngắt nghỉ.
+  if (rawLines.length <= 1) {
+    return toSpokenLines(script).map((text) => ({ speaker: '', text }))
+  }
+  return rawLines.map((line) => ({
+    speaker: speakerOf(line),
+    text: toSpokenLines(line)[0] ?? line,
+  }))
 }
 
 function pickVoice(speaker: string): SpeechSynthesisVoice | undefined {

@@ -137,22 +137,22 @@ export function QuestionBlock({ question, audioOnly, label, onGraded }: Props) {
   )
 }
 
-/** Nút phát âm (Part 1/2/3/4) — dùng speechSynthesis của trình duyệt. */
+/** Nút phát âm (Part 1/2/3/4) — đọc TỪNG CÂU tách riêng qua speechSynthesis. */
 export function SpeakButton({
-  text,
+  lines,
   label,
   big,
   onSpeak,
 }: {
-  text: string
+  lines: string[]
   label: string
   big?: boolean
-  onSpeak: (t: string) => void
+  onSpeak: (lines: string[]) => void
 }) {
   return (
     <button
       type="button"
-      onClick={() => onSpeak(text)}
+      onClick={() => onSpeak(lines)}
       aria-label={label}
       className={cn(
         'press grid shrink-0 place-items-center rounded-full bg-violet-100 text-violet-700 hover:bg-violet-200',
