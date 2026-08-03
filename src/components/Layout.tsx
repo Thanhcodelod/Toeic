@@ -6,8 +6,11 @@ import {
   ListChecks,
   Headphones,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
   X,
 } from 'lucide-react'
+import { cn } from '../lib/cn'
 import { ProgressBar } from './ProgressBar'
 import { Sidebar } from './sidebar/Sidebar'
 import { UserMenu } from '../auth/UserMenu'
@@ -43,6 +46,11 @@ export function Layout({
   children,
 }: LayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
+  // Sidebar cố định (màn hình lớn) có thể đóng/mở. Mặc định MỞ trên desktop rộng,
+  // THU GỌN trên iPad (≥lg nhưng <xl) để nội dung chiếm trọn khung hình.
+  const [railOpen, setRailOpen] = useState(
+    () => typeof window !== 'undefined' && window.innerWidth >= 1280,
+  )
 
   const handleSelect = (day: number) => {
     onSelectDay(day)
@@ -54,6 +62,7 @@ export function Layout({
       {/* Header */}
       <header className="z-20 shrink-0 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="flex items-center gap-3 px-4 py-3 lg:px-6">
+          {/* Mở drawer (điện thoại / iPad dọc) */}
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
@@ -61,6 +70,20 @@ export function Layout({
             aria-label="Mở danh sách ngày học"
           >
             <Menu className="h-5 w-5" />
+          </button>
+          {/* Đóng/mở sidebar (màn hình lớn / iPad ngang) */}
+          <button
+            type="button"
+            onClick={() => setRailOpen((o) => !o)}
+            className="press hidden h-9 w-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-100 lg:grid"
+            aria-label={railOpen ? 'Ẩn danh sách ngày học' : 'Hiện danh sách ngày học'}
+            title={railOpen ? 'Ẩn danh sách ngày' : 'Hiện danh sách ngày'}
+          >
+            {railOpen ? (
+              <PanelLeftClose className="h-5 w-5" />
+            ) : (
+              <PanelLeftOpen className="h-5 w-5" />
+            )}
           </button>
 
           <div className="flex items-center gap-2.5">
@@ -77,7 +100,7 @@ export function Layout({
             </div>
           </div>
 
-          <div className="ml-auto hidden items-center gap-2 md:flex">
+          <div className="ml-auto hidden items-center gap-2 xl:flex">
             <button
               type="button"
               onClick={onOpenDictation}
@@ -121,8 +144,8 @@ export function Layout({
             <UserMenu />
           </div>
 
-          {/* Dictation + vocab + user menu (mobile) */}
-          <div className="ml-auto flex items-center gap-1.5 md:hidden">
+          {/* Nút gọn (icon) — điện thoại + iPad, tới trước cỡ desktop lớn */}
+          <div className="ml-auto flex items-center gap-1.5 xl:hidden">
             <button
               type="button"
               onClick={onOpenDictation}
@@ -159,8 +182,8 @@ export function Layout({
           </div>
         </div>
 
-        {/* Progress bar (mobile) */}
-        <div className="px-4 pb-3 md:hidden">
+        {/* Thanh tiến độ (điện thoại + iPad) — desktop lớn hiện trong header */}
+        <div className="px-4 pb-3 xl:hidden">
           <ProgressBar
             value={progress.completionPct}
             doneCount={progress.doneCount}
@@ -172,16 +195,24 @@ export function Layout({
 
       {/* Body */}
       <div className="flex min-h-0 flex-1">
-        {/* Desktop sidebar */}
-        <aside className="thin-scrollbar hidden w-80 shrink-0 overflow-y-auto border-r border-slate-200 bg-white lg:block">
-          <Sidebar
-            days={days}
-            loading={daysLoading}
-            error={daysError}
-            selectedDay={selectedDay}
-            onSelectDay={handleSelect}
-            progress={progress}
-          />
+        {/* Sidebar cố định (màn hình lớn) — đóng/mở được, trượt mượt về bề rộng 0 */}
+        <aside
+          className={cn(
+            'hidden shrink-0 overflow-hidden bg-white transition-[width] duration-300 ease-smooth lg:block',
+            railOpen ? 'border-r border-slate-200 lg:w-80' : 'lg:w-0',
+          )}
+        >
+          {/* Nội dung rộng cố định w-80 để trượt/kẹp thay vì co chữ khi đóng */}
+          <div className="thin-scrollbar h-full w-80 overflow-y-auto">
+            <Sidebar
+              days={days}
+              loading={daysLoading}
+              error={daysError}
+              selectedDay={selectedDay}
+              onSelectDay={handleSelect}
+              progress={progress}
+            />
+          </div>
         </aside>
 
         {/* Mobile drawer */}
