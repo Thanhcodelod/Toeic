@@ -1,12 +1,19 @@
 // Tách một đoạn script nghe thành CÁC CÂU NÓI RIÊNG để đọc tuần tự (mỗi câu một
-// lượt, có ngắt nghỉ) — thay vì đọc gộp cả khối. Xử lý cả 3 dạng dữ liệu:
-//   - nhiều dòng (Part 3/4, hoặc script đã tách sẵn): mỗi dòng một câu, bỏ nhãn
-//     người nói "M:/W:/Man:/Woman:/Speaker 1:".
-//   - một dòng có dấu "(A) … (B) … (C) … (D) …" (Part 1/2 kiểu cũ): tách ở các mốc;
-//     bỏ lời dẫn "Look at the picture…"; giữ câu hỏi Part 2 làm câu đầu.
-//   - một dòng không mốc: tách theo dấu kết câu.
+// lượt, có ngắt nghỉ) — thay vì đọc gộp cả khối.
+//
+// BẢO ĐẢM: hàm này chỉ TÁCH nội dung, KHÔNG BỎ SÓT. Những thứ duy nhất bị lược là
+// meta không phải lời nói: nhãn người nói đầu dòng ("Man:/Woman:/M:/W:/Speaker 1:")
+// và mốc lựa chọn "(A)(B)(C)(D)" + lời dẫn "Look at the picture…". Toàn bộ CÂU CHỮ
+// còn lại đều được giữ và đọc. (Có script check-listening-coverage.mjs kiểm 100%.)
+//
+// Ba dạng dữ liệu:
+//   - nhiều dòng (Part 3/4): mỗi lượt thoại -> tách thành từng câu, giữ HẾT.
+//   - một dòng có "(A) … (B) …" (Part 1/2 kiểu cũ): tách ở mốc; bỏ lời dẫn.
+//   - một dòng thường: tách theo dấu kết câu.
 
-const SPEAKER = /^(?:[MW]|man|woman|male|female|speaker\s*\d*|narrator|q|a)\s*\d*\s*[:.]\s*/i
+// Nhãn người nói: BẮT BUỘC có dấu ":" (quy ước chuẩn của transcript) nên không thể
+// ăn nhầm "Mr." hay câu bắt đầu bằng "A." — tránh mọi rủi ro bỏ mất nội dung.
+const SPEAKER = /^(?:[mw]|man|woman|male|female|boy|girl|speaker\s*\d*|narrator|q|a)\s*\d*\s*:\s*/i
 
 function stripSpeaker(line: string): string {
   return line.replace(SPEAKER, '').trim()
@@ -28,16 +35,31 @@ export function toSpokenLines(raw: string | null | undefined): string[] {
     const lines: string[] = []
     // Lời dẫn "Look at the picture and listen." là câu mồi -> bỏ. Câu hỏi Part 2 -> giữ.
     if (preamble && !/look at (the )?picture|listen to/i.test(preamble)) lines.push(preamble)
-    return [...lines, ...parts]
+    return [...lines, ...parts].flatMap(splitSentences)
   }
 
-  // 2) Nhiều dòng -> mỗi dòng một câu, bỏ nhãn người nói.
+  // 2) Nhiều dòng -> mỗi lượt: bỏ nhãn người nói rồi TÁCH TỪNG CÂU, giữ HẾT.
   const byLine = text.split(/\n+/).map((l) => l.trim()).filter(Boolean)
-  if (byLine.length > 1) return byLine.map(stripSpeaker).filter(Boolean)
+  if (byLine.length > 1) return byLine.flatMap((l) => splitSentences(stripSpeaker(l)))
 
-  // 3) Một dòng, không mốc -> tách theo câu.
-  return stripSpeaker(text)
+  // 3) Một dòng thường -> tách theo câu.
+  return splitSentences(stripSpeaker(text))
+}
+
+// Viết tắt danh xưng/thông dụng: KHÔNG tách câu ngay sau chúng (tránh "Mr. [nghỉ] Kim").
+const ABBREV = /(?:^|\s)(?:mr|mrs|ms|dr|prof|st|ave|rd|inc|ltd|co|corp|dept|no|vs|jr|sr|etc)\.$/i
+
+/** Tách một đoạn thành các câu (theo dấu kết câu), GIỮ TẤT CẢ (chỉ tách, không bỏ). */
+function splitSentences(text: string): string[] {
+  const raw = text
     .split(/(?<=[.?!])\s+/)
     .map((s) => s.trim())
     .filter(Boolean)
+  // Gộp lại chỗ vừa tách nhầm ngay sau một viết tắt danh xưng.
+  const out: string[] = []
+  for (const piece of raw) {
+    if (out.length > 0 && ABBREV.test(out[out.length - 1])) out[out.length - 1] += ' ' + piece
+    else out.push(piece)
+  }
+  return out
 }

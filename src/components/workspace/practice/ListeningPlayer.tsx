@@ -29,10 +29,13 @@ function parseLines(script: string): Line[] {
   if (rawLines.length <= 1) {
     return toSpokenLines(script).map((text) => ({ speaker: '', text }))
   }
-  return rawLines.map((line) => ({
-    speaker: speakerOf(line),
-    text: toSpokenLines(line)[0] ?? line,
-  }))
+  // Nhiều dòng (Part 3/4): mỗi lượt thoại có thể có NHIỀU CÂU — đọc ĐỦ tất cả
+  // các câu (giữ đúng giọng người nói cho cả lượt), không chỉ lấy câu đầu.
+  return rawLines.flatMap((line) => {
+    const speaker = speakerOf(line)
+    const sentences = toSpokenLines(line)
+    return (sentences.length ? sentences : [line]).map((text) => ({ speaker, text }))
+  })
 }
 
 function pickVoice(speaker: string): SpeechSynthesisVoice | undefined {
