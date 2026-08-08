@@ -13,6 +13,7 @@ import {
 import { cn } from '../../../lib/cn'
 import { useSpeak } from '../../../hooks/useSpeak'
 import { answerVocabCheck, getVocabProgressFor } from '../../../lib/answersApi'
+import { setVocabKnown } from '../../../lib/vocabExtrasApi'
 import {
   ACTIVE_LIMIT,
   CHECKS_MAX,
@@ -265,6 +266,17 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
     advanceFrom({ ...words })
   }, [advanceFrom, words, saving, saveError])
 
+  // "Đã biết — bỏ qua": đánh dấu thuộc (cấp 5) để không học lại trong buổi.
+  const markKnown = useCallback(() => {
+    if (!card) return
+    const full: ExerciseKind[] = ['tf', 'word-meaning', 'listen-meaning', 'meaning-word', 'type', 'listen-type']
+    const next = { ...words, [card.id]: { level: 5 as VocabLevel, kinds: full } }
+    setWords(next)
+    if (sched.current) sched.current.words = next
+    if (card.vocabItemId != null) setVocabKnown(card.vocabItemId).catch(() => {})
+    advanceFrom(next)
+  }, [card, words, advanceFrom])
+
   const primary = useCallback(() => {
     if (!step) return
     if (step.kind === 'intro') {
@@ -504,6 +516,13 @@ export function VocabLearnSession({ cards, onLessonComplete, onExit }: Props) {
             <p className="mt-5 text-xs font-medium text-slate-400">
               Phải trả lời đúng {need} dạng câu hỏi khác nhau thì từ này mới “qua”.
             </p>
+            <button
+              type="button"
+              onClick={() => markKnown()}
+              className="press mt-3 text-xs font-medium text-slate-400 hover:text-emerald-600"
+            >
+              Đã biết từ này — bỏ qua
+            </button>
           </div>
         ) : (
           <>

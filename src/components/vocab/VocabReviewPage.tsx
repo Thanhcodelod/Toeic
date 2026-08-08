@@ -3,7 +3,9 @@ import {
   ArrowLeft,
   BookMarked,
   GraduationCap,
+  Library,
   Loader2,
+  Puzzle,
   RefreshCw,
   Sparkles,
 } from 'lucide-react'
@@ -11,9 +13,12 @@ import { getNewVocab, getReviewVocab, getVocabStats } from '../../lib/api'
 import { UserMenu } from '../../auth/UserMenu'
 import { VocabQuiz } from '../workspace/vocabulary/VocabQuiz'
 import { VocabLearnSession } from '../workspace/vocabulary/VocabLearnSession'
+import { SavedWordsPanel } from './SavedWordsPanel'
+import { VocabReference } from './VocabReference'
+import { MatchingGame } from './MatchingGame'
 import type { VocabCard, VocabStats } from '../../data/types'
 
-type BatchKind = 'new' | 'review'
+type BatchKind = 'new' | 'review' | 'match'
 
 interface VocabReviewPageProps {
   onBack: () => void
@@ -28,6 +33,7 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
   const [fetching, setFetching] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [count, setCount] = useState(15)
+  const [tool, setTool] = useState<'reference' | null>(null)
 
   const refreshStats = useCallback(async () => {
     setStatsLoading(true)
@@ -49,8 +55,11 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
     setFetching(true)
     setNotice(null)
     try {
-      const cards =
-        kind === 'new' ? await getNewVocab(count) : await getReviewVocab(count)
+      let cards =
+        kind === 'new' ? await getNewVocab(count)
+        : kind === 'match' ? await getReviewVocab(30)
+        : await getReviewVocab(count)
+      if (kind === 'match' && cards.length < 2) cards = await getNewVocab(30)
       if (cards.length === 0) {
         setNotice(
           kind === 'new'
@@ -105,7 +114,11 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
       </header>
 
       <main className="thin-scrollbar flex-1 overflow-y-auto px-4 py-6">
-        {batch && batchKind === 'new' ? (
+        {tool === 'reference' ? (
+          <VocabReference onBack={() => setTool(null)} />
+        ) : batch && batchKind === 'match' ? (
+          <MatchingGame cards={batch} onExit={exitBatch} />
+        ) : batch && batchKind === 'new' ? (
           // Học từ mới = đúng bài học xen kẽ như trong lộ trình 90 ngày:
           // gặp 2 từ → kiểm tra ngay 2 từ đó → qua đủ 6 dạng mới thôi.
           <VocabLearnSession
@@ -272,6 +285,31 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
                   cấp.
                 </span>
               </button>
+
+              <button
+                type="button"
+                disabled={fetching}
+                onClick={() => startBatch('match')}
+                className="group lift press flex flex-col items-start gap-2 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-card hover:border-violet-300 disabled:opacity-60"
+              >
+                <span className="grid h-11 w-11 place-items-center rounded-xl bg-amber-100 text-amber-700">
+                  <Puzzle className="h-6 w-6" />
+                </span>
+                <span className="text-base font-bold text-slate-900">Trò chơi tìm cặp</span>
+                <span className="text-sm text-slate-500">Nối từ ↔ nghĩa cho nhanh — ôn lại vui hơn.</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTool('reference')}
+                className="group lift press flex flex-col items-start gap-2 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-card hover:border-violet-300"
+              >
+                <span className="grid h-11 w-11 place-items-center rounded-xl bg-sky-100 text-sky-700">
+                  <Library className="h-6 w-6" />
+                </span>
+                <span className="text-base font-bold text-slate-900">Tra cứu kho từ</span>
+                <span className="text-sm text-slate-500">Duyệt/tìm 837 từ trọng tâm — nghe, lưu, đánh dấu đã thuộc.</span>
+              </button>
             </div>
 
             {fetching && (
@@ -279,6 +317,11 @@ export function VocabReviewPage({ onBack }: VocabReviewPageProps) {
                 <Loader2 className="h-4 w-4 animate-spin" /> Đang tải từ vựng…
               </p>
             )}
+
+            {/* Sổ tay từ lưu khi nghe */}
+            <div className="border-t border-slate-200 pt-5">
+              <SavedWordsPanel />
+            </div>
           </div>
         )}
       </main>

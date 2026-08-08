@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
-import { Eye, EyeOff, Headphones, Play, Square } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { BookmarkPlus, Check, Eye, EyeOff, Headphones, Play, Square } from 'lucide-react'
 import { cn } from '../../../lib/cn'
-import { toSpokenLines } from '../../../lib/speech'
+import { cancelSpeech, speakTurns, toSpokenTurns, warmVoices } from '../../../lib/speech'
+import { SpeedControl } from '../../common/SpeedControl'
+import { saveWord } from '../../../lib/savedWordsApi'
 
 interface ListeningPlayerProps {
   /** The spoken script (may contain "Man:"/"Woman:" speaker labels). */
@@ -12,109 +14,65 @@ interface ListeningPlayerProps {
   allowTranscript?: boolean
 }
 
-interface Line {
-  speaker: string
-  text: string
+const SPEAKER_TAG: Record<string, string> = {
+  man: 'Nam', m: 'Nam', male: 'Nam', boy: 'Nam',
+  woman: 'Nữ', w: 'Nữ', female: 'Nữ', girl: 'Nữ',
 }
-
-function parseLines(script: string): Line[] {
-  // Giữ nhãn người nói (để chọn giọng nam/nữ) trước khi toSpokenLines bỏ nó.
-  const rawLines = script.split(/\n+/).map((l) => l.trim()).filter(Boolean)
-  const speakerOf = (line: string): string => {
-    const m = line.match(/^([A-Za-z][A-Za-z .]{0,14}?)\s*\d*\s*:\s*/)
-    return m ? m[1].trim().toLowerCase() : ''
-  }
-  // Nếu script gốc chỉ một dòng (Part 1/2 kiểu cũ có "(A)…(B)…"), toSpokenLines
-  // sẽ tự tách thành từng câu -> mỗi câu một utterance riêng, có ngắt nghỉ.
-  if (rawLines.length <= 1) {
-    return toSpokenLines(script).map((text) => ({ speaker: '', text }))
-  }
-  // Nhiều dòng (Part 3/4): mỗi lượt thoại có thể có NHIỀU CÂU — đọc ĐỦ tất cả
-  // các câu (giữ đúng giọng người nói cho cả lượt), không chỉ lấy câu đầu.
-  return rawLines.flatMap((line) => {
-    const speaker = speakerOf(line)
-    const sentences = toSpokenLines(line)
-    return (sentences.length ? sentences : [line]).map((text) => ({ speaker, text }))
-  })
-}
-
-function pickVoice(speaker: string): SpeechSynthesisVoice | undefined {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-  const en = window.speechSynthesis
-    .getVoices()
-    .filter((v) => v.lang.toLowerCase().startsWith('en'))
-  if (en.length === 0) return
-  const female =
-    en.find((v) => /female|zira|samantha|susan|hazel|aria|jenny/i.test(v.name)) ??
-    en[0]
-  const male =
-    en.find((v) => /male|david|mark|daniel|george|guy|ryan/i.test(v.name)) ??
-    en[1] ??
-    en[0]
-  if (speaker.startsWith('woman') || speaker.startsWith('female')) return female
-  if (speaker.startsWith('man') || speaker.startsWith('male')) return male
-  return en[0]
-}
+const cleanWord = (w: string) => w.toLowerCase().replace(/[^a-z'-]/g, '')
 
 export function ListeningPlayer({
   script,
   label = 'Bài nghe',
   allowTranscript = true,
 }: ListeningPlayerProps) {
-  const supported =
-    typeof window !== 'undefined' && 'speechSynthesis' in window
+  const supported = typeof window !== 'undefined' && 'speechSynthesis' in window
   const [playing, setPlaying] = useState(false)
   const [showScript, setShowScript] = useState(false)
-  const stoppedRef = useRef(false)
-  const lines = parseLines(script)
+  const [activeIdx, setActiveIdx] = useState(-1)
+  const [saved, setSaved] = useState<string | null>(null)
 
-  // Warm up the voice list (loads async in some browsers).
+  const turns = useMemo(() => toSpokenTurns(script), [script])
+
   useEffect(() => {
     if (!supported) return
-    window.speechSynthesis.getVoices()
-    const handler = () => window.speechSynthesis.getVoices()
-    window.speechSynthesis.addEventListener('voiceschanged', handler)
-    return () => {
-      window.speechSynthesis.removeEventListener('voiceschanged', handler)
-      window.speechSynthesis.cancel()
-    }
+    warmVoices()
+    return () => cancelSpeech()
   }, [supported])
 
-  const stop = () => {
-    stoppedRef.current = true
-    if (supported) window.speechSynthesis.cancel()
-    setPlaying(false)
-  }
+  useEffect(() => {
+    if (!supported || !playing) return
+    const id = setInterval(() => {
+      if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+        setPlaying(false)
+        setActiveIdx(-1)
+      }
+    }, 400)
+    return () => clearInterval(id)
+  }, [supported, playing])
 
+  const stop = () => {
+    cancelSpeech()
+    setPlaying(false)
+    setActiveIdx(-1)
+  }
   const play = () => {
     if (!supported) return
-    window.speechSynthesis.cancel()
-    stoppedRef.current = false
+    // Giọng riêng từng nhân vật + báo câu đang đọc để highlight transcript đồng bộ.
+    speakTurns(turns, undefined, setActiveIdx)
     setPlaying(true)
+    setShowScript(true)
+  }
 
-    let i = 0
-    const speakNext = () => {
-      if (stoppedRef.current || i >= lines.length) {
-        setPlaying(false)
-        return
-      }
-      const line = lines[i]
-      const u = new SpeechSynthesisUtterance(line.text)
-      u.lang = 'en-US'
-      u.rate = 0.95
-      const voice = pickVoice(line.speaker)
-      if (voice) u.voice = voice
-      u.onend = () => {
-        i += 1
-        speakNext()
-      }
-      u.onerror = () => {
-        i += 1
-        speakNext()
-      }
-      window.speechSynthesis.speak(u)
+  const onSaveWord = async (w: string, ctx: string) => {
+    const word = cleanWord(w)
+    if (!word) return
+    try {
+      await saveWord(word, ctx)
+      setSaved(word)
+      window.setTimeout(() => setSaved((s) => (s === word ? null : s)), 1600)
+    } catch {
+      /* im lặng */
     }
-    speakNext()
   }
 
   return (
@@ -131,26 +89,20 @@ export function ListeningPlayer({
             onClick={playing ? stop : play}
             className={cn(
               'press inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold',
-              playing
-                ? 'bg-rose-100 text-rose-700 hover:bg-rose-200'
-                : 'bg-brand-600 text-white hover:bg-brand-700',
+              playing ? 'bg-rose-100 text-rose-700 hover:bg-rose-200' : 'bg-brand-600 text-white hover:bg-brand-700',
             )}
           >
             {playing ? (
-              <>
-                <Square className="h-3.5 w-3.5" /> Dừng
-              </>
+              <><Square className="h-3.5 w-3.5" /> Dừng</>
             ) : (
-              <>
-                <Play className="h-3.5 w-3.5" /> Nghe
-              </>
+              <><Play className="h-3.5 w-3.5" /> Nghe</>
             )}
           </button>
         ) : (
-          <span className="text-xs text-amber-600">
-            Trình duyệt không hỗ trợ đọc giọng nói.
-          </span>
+          <span className="text-xs text-amber-600">Trình duyệt không hỗ trợ đọc giọng nói.</span>
         )}
+
+        {supported && <SpeedControl />}
 
         {allowTranscript && (
           <button
@@ -158,22 +110,52 @@ export function ListeningPlayer({
             onClick={() => setShowScript((s) => !s)}
             className="press ml-auto inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
           >
-            {showScript ? (
-              <>
-                <EyeOff className="h-3.5 w-3.5" /> Ẩn lời thoại
-              </>
-            ) : (
-              <>
-                <Eye className="h-3.5 w-3.5" /> Xem lời thoại
-              </>
-            )}
+            {showScript ? <><EyeOff className="h-3.5 w-3.5" /> Ẩn lời thoại</> : <><Eye className="h-3.5 w-3.5" /> Xem lời thoại</>}
           </button>
         )}
       </div>
 
       {allowTranscript && showScript && (
-        <div className="mt-3 origin-top animate-fade-slide-down whitespace-pre-line rounded-xl bg-slate-50 p-4 text-sm leading-relaxed text-slate-700">
-          {script}
+        <div className="mt-3 origin-top animate-fade-slide-down space-y-2 rounded-xl bg-slate-50 p-4">
+          <p className="flex items-center gap-1.5 text-[11px] text-slate-400">
+            <BookmarkPlus className="h-3.5 w-3.5" /> Bấm vào một từ để lưu vào sổ tay ôn sau. Câu đang đọc được tô sáng.
+          </p>
+          {turns.map((t, i) => (
+            <p
+              key={i}
+              className={cn(
+                'rounded-lg px-2 py-1 text-sm leading-relaxed transition-colors',
+                i === activeIdx ? 'bg-brand-100 text-slate-900' : 'text-slate-700',
+              )}
+            >
+              {t.speaker && SPEAKER_TAG[t.speaker] && (
+                <span className="mr-1.5 text-xs font-bold text-brand-500">{SPEAKER_TAG[t.speaker]}:</span>
+              )}
+              {t.text.split(/(\s+)/).map((tok, k) =>
+                /\S/.test(tok) ? (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => onSaveWord(tok, t.text)}
+                    className="rounded px-0.5 hover:bg-amber-200 hover:text-amber-900"
+                    title="Lưu từ này"
+                  >
+                    {tok}
+                  </button>
+                ) : (
+                  <span key={k}>{tok}</span>
+                ),
+              )}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {saved && (
+        <div className="pointer-events-none fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-pop-in rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-card-lg">
+          <span className="flex items-center gap-1.5">
+            <Check className="h-4 w-4" /> Đã lưu “{saved}” vào sổ tay
+          </span>
         </div>
       )}
     </div>

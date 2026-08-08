@@ -4,13 +4,18 @@ import { DayView } from './components/DayView'
 import { VocabReviewPage } from './components/vocab/VocabReviewPage'
 import { DictationPage } from './components/dictation/DictationPage'
 import { ReadingPage } from './components/reading/ReadingPage'
+import { StatsPage } from './components/stats/StatsPage'
+import { MockTestPage } from './components/mock/MockTestPage'
+import { OutputPage } from './components/output/OutputPage'
+import { CoursePage } from './components/khoahoc/CoursePage'
 import { PracticePartsPage } from './components/practice-bank/PracticePartsPage'
+import { DictionaryFab } from './components/DictionaryFab'
 import { purgeLegacyLocalStorage } from './lib/answersApi'
 import { useDays } from './hooks/useDays'
 import { useProgress } from './hooks/useProgress'
 import { TOTAL_DAYS } from './data/constants'
 
-type View = 'course' | 'vocab' | 'dictation' | 'reading' | 'parts'
+type View = 'course' | 'vocab' | 'dictation' | 'reading' | 'parts' | 'stats' | 'mock' | 'output' | 'khoahoc'
 
 function clampDay(value: number): number {
   if (Number.isNaN(value)) return 1
@@ -26,7 +31,14 @@ function readDayFromUrl(): number {
 function readViewFromUrl(): View {
   if (typeof window === 'undefined') return 'course'
   const v = new URLSearchParams(window.location.search).get('view')
-  return v === 'vocab' || v === 'dictation' || v === 'reading' || v === 'parts'
+  return v === 'vocab' ||
+    v === 'dictation' ||
+    v === 'reading' ||
+    v === 'parts' ||
+    v === 'stats' ||
+    v === 'mock' ||
+    v === 'output' ||
+    v === 'khoahoc'
     ? v
     : 'course'
 }
@@ -82,6 +94,14 @@ export default function App() {
     content = <ReadingPage onBack={() => selectView('course')} />
   } else if (view === 'parts') {
     content = <PracticePartsPage onBack={() => selectView('course')} />
+  } else if (view === 'stats') {
+    content = <StatsPage onBack={() => selectView('course')} />
+  } else if (view === 'mock') {
+    content = <MockTestPage onBack={() => selectView('course')} />
+  } else if (view === 'output') {
+    content = <OutputPage onBack={() => selectView('course')} />
+  } else if (view === 'khoahoc') {
+    content = <CoursePage onBack={() => selectView('course')} />
   } else {
     content = (
       <Layout
@@ -95,12 +115,20 @@ export default function App() {
         onOpenDictation={() => selectView('dictation')}
         onOpenReading={() => selectView('reading')}
         onOpenParts={() => selectView('parts')}
+        onOpenStats={() => selectView('stats')}
+        onOpenMock={() => selectView('mock')}
+        onOpenOutput={() => selectView('output')}
+        onOpenCourse={() => selectView('khoahoc')}
       >
         <DayView
           key={selectedDay}
           dayNumber={selectedDay}
           progress={progress}
           onSelectDay={selectDay}
+          onOpenVocab={() => selectView('vocab')}
+          onOpenParts={() => selectView('parts')}
+          onOpenDictation={() => selectView('dictation')}
+          onOpenReading={() => selectView('reading')}
         />
       </Layout>
     )
@@ -109,8 +137,11 @@ export default function App() {
   // Keying the wrapper by `view` replays the entrance ONLY when the active view
   // actually changes — not on every re-render (progress ticks, day changes…).
   return (
-    <div key={view} className="animate-fade-slide-up">
-      {content}
-    </div>
+    <>
+      <div key={view} className="animate-fade-slide-up">
+        {content}
+      </div>
+      <DictionaryFab />
+    </>
   )
 }

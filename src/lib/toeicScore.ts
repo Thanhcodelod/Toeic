@@ -41,3 +41,29 @@ export function listeningScaled(correct: number): number {
 export function readingScaled(correct: number): number {
   return round5(interpolate(RC_ANCHORS, correct))
 }
+
+export interface ScoreEstimate {
+  lc: number
+  rc: number
+  total: number
+  cefr: string
+  cefrNote: string
+}
+
+/** Từ số câu đúng LC & RC (0–100 mỗi phần) → điểm quy đổi ước tính + mức CEFR. */
+export function estimateScore(lcCorrect: number, rcCorrect: number): ScoreEstimate {
+  const lc = listeningScaled(lcCorrect)
+  const rc = readingScaled(rcCorrect)
+  const total = lc + rc
+  const [cefr, cefrNote] = cefrBand(total)
+  return { lc, rc, total, cefr, cefrNote }
+}
+
+/** Mức CEFR tương ứng tổng điểm TOEIC L&R (ngưỡng tham chiếu phổ biến). */
+export function cefrBand(total: number): [string, string] {
+  if (total >= 945) return ['C1', 'Thành thạo — dùng tiếng Anh linh hoạt trong công việc']
+  if (total >= 785) return ['B2', 'Khá — giao tiếp công việc tự tin']
+  if (total >= 550) return ['B1', 'Trung cấp — xử lý tình huống quen thuộc']
+  if (total >= 225) return ['A2', 'Sơ cấp — hiểu câu và cụm thông dụng']
+  return ['A1', 'Mới bắt đầu']
+}

@@ -10,7 +10,9 @@ import {
   type PtPassage,
   type PtQuestion,
 } from '../../lib/practiceApi'
-import { toSpokenLines } from '../../lib/speech'
+import { toSpokenTurns, type SpeechTurn } from '../../lib/speech'
+import { SpeedControl } from '../common/SpeedControl'
+import { NotedText } from '../common/NotedText'
 import { QuestionBlock, SpeakButton } from './QuestionBlock'
 
 interface Props {
@@ -20,26 +22,31 @@ interface Props {
 }
 
 /**
- * Các CÂU cần đọc cho một đơn vị nghe, MỖI CÂU MỘT DÒNG (đọc tuần tự, có ngắt nghỉ):
- *  - Part 1: 4 câu mô tả, mỗi câu kèm nhãn A–D ("A. …").
- *  - Part 2: câu hỏi trước, rồi 3 câu đáp kèm nhãn.
- *  - Part 3/4: tách kịch bản theo dòng (bỏ nhãn người nói).
+ * Các LƯỢT cần đọc cho một đơn vị nghe (kèm nhãn người nói -> đổi giọng):
+ *  - Part 1: 4 câu mô tả (một giọng dẫn).
+ *  - Part 2: câu hỏi (giọng 'q') rồi 3 đáp (giọng 'r') — hai giọng khác nhau.
+ *  - Part 3/4: tách kịch bản, MỖI nhân vật một giọng riêng.
  */
-function speechLines(part: Part, q?: PtQuestion, body?: string): string[] {
+function speechTurns(part: Part, q?: PtQuestion, body?: string): SpeechTurn[] {
   if (part === 1 && q)
     return (['A', 'B', 'C', 'D'] as const)
       .filter((k) => q.options[k])
-      .map((k) => `${k}. ${q.options[k]}`)
+      .map((k) => ({ text: `${k}. ${q.options[k]}` }))
   if (part === 2 && q)
     return [
-      q.prompt ?? '',
-      ...(['A', 'B', 'C'] as const).filter((k) => q.options[k]).map((k) => `${k}. ${q.options[k]}`),
-    ].filter(Boolean)
-  return toSpokenLines(body ?? '')
+      ...(q.prompt ? [{ text: q.prompt, speaker: 'q' }] : []),
+      ...(['A', 'B', 'C'] as const)
+        .filter((k) => q.options[k])
+        .map((k) => ({ text: `${k}. ${q.options[k]}`, speaker: 'r' })),
+    ]
+  return toSpokenTurns(body ?? '')
 }
 
 export function PartRunner({ part, lesson, onDone }: Props) {
-  const { speakSequence, supported } = useSpeak()
+  const { speakSequence, stop, supported } = useSpeak()
+
+  // Dừng đọc khi rời màn / đổi bài (tránh voice chạy tiếp lúc đã thoát).
+  useEffect(() => () => stop(), [stop])
   const [content, setContent] = useState<PtLessonContent | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [unit, setUnit] = useState(0)
@@ -86,8 +93,8 @@ export function PartRunner({ part, lesson, onDone }: Props) {
   useEffect(() => {
     if (!cur || !supported || !meta.hasAudio) return
     const t = setTimeout(() => {
-      if (cur.kind === 'q') speakSequence(speechLines(part, cur.q))
-      else speakSequence(speechLines(part, undefined, cur.p.body))
+      if (cur.kind === 'q') speakSequence(speechTurns(part, cur.q))
+      else speakSequence(speechTurns(part, undefined, cur.p.body))
     }, 350)
     return () => clearTimeout(t)
   }, [unit, content]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -160,10 +167,11 @@ export function PartRunner({ part, lesson, onDone }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
         <span className="font-semibold text-slate-600">
           {cur?.kind === 'p' ? 'Đoạn' : 'Câu'} {unit + 1}/{units.length}
         </span>
+        {meta.hasAudio && supported && <SpeedControl />}
         <span className="text-xs text-slate-400">{meta.hint}</span>
       </div>
 
@@ -188,7 +196,7 @@ export function PartRunner({ part, lesson, onDone }: Props) {
             )}
             <div className="flex items-center justify-center gap-3 p-4">
               {supported && (
-                <SpeakButton big lines={speechLines(part, cur.q)} label="Nghe 4 câu" onSpeak={speakSequence} />
+                <SpeakButton big lines={speechTurns(part, cur.q)} label="Nghe 4 câu" onSpeak={speakSequence} />
               )}
               <p className="text-sm text-slate-500">Nghe 4 câu và chọn câu tả đúng ảnh</p>
             </div>
@@ -198,7 +206,7 @@ export function PartRunner({ part, lesson, onDone }: Props) {
         {cur?.kind === 'q' && part === 2 && (
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white p-6 shadow-card">
             {supported ? (
-              <SpeakButton big lines={speechLines(part, cur.q)} label="Nghe câu hỏi và 3 đáp án" onSpeak={speakSequence} />
+              <SpeakButton big lines={speechTurns(part, cur.q)} label="Nghe câu hỏi và 3 đáp án" onSpeak={speakSequence} />
             ) : (
               <p className="text-lg font-semibold text-slate-800">{cur.q.prompt}</p>
             )}
@@ -221,16 +229,18 @@ export function PartRunner({ part, lesson, onDone }: Props) {
             )}
             {meta.hasAudio ? (
               <div className="flex items-center gap-3">
-                {supported && <SpeakButton lines={speechLines(part, undefined, cur.p.body)} label="Nghe lại" onSpeak={speakSequence} />}
+                {supported && <SpeakButton lines={speechTurns(part, undefined, cur.p.body)} label="Nghe lại" onSpeak={speakSequence} />}
                 <p className="text-sm text-slate-500">
                   {part === 3 ? 'Nghe đoạn hội thoại rồi trả lời' : 'Nghe bài nói rồi trả lời'}
                   {supported ? '' : ' (trình duyệt không hỗ trợ phát âm — đọc kịch bản bên dưới)'}
                 </p>
               </div>
             ) : (
-              <div className="whitespace-pre-line text-[15px] leading-relaxed text-slate-800">
-                {cur.p.body}
-              </div>
+              <NotedText
+                text={cur.p.body}
+                context={`pt:${part}:${lesson}:${unit}`}
+                className="whitespace-pre-line text-[15px] leading-relaxed text-slate-800"
+              />
             )}
             {/* Nghe: hiện kịch bản chỉ khi trình duyệt không phát âm được */}
             {meta.hasAudio && !supported && (

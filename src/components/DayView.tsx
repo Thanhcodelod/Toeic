@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { DayWorkspace } from './workspace/DayWorkspace'
+import { TodayPanel } from './TodayPanel'
 import { useDayDetail } from '../hooks/useDayDetail'
 import { dayHasContent } from '../data/types'
 import type { UseProgress } from '../hooks/useProgress'
@@ -9,9 +10,21 @@ interface DayViewProps {
   dayNumber: number
   progress: UseProgress
   onSelectDay: (dayNumber: number) => void
+  onOpenVocab: () => void
+  onOpenParts: () => void
+  onOpenDictation: () => void
+  onOpenReading: () => void
 }
 
-export function DayView({ dayNumber, progress, onSelectDay }: DayViewProps) {
+export function DayView({
+  dayNumber,
+  progress,
+  onSelectDay,
+  onOpenVocab,
+  onOpenParts,
+  onOpenDictation,
+  onOpenReading,
+}: DayViewProps) {
   const { day, loading, error } = useDayDetail(dayNumber)
   const { markInProgress, loading: progressLoading } = progress
 
@@ -52,6 +65,16 @@ export function DayView({ dayNumber, progress, onSelectDay }: DayViewProps) {
   }
 
   return (
-    <DayWorkspace day={day} progress={progress} onSelectDay={onSelectDay} />
+    <>
+      <div className="mx-auto max-w-5xl px-4 pt-6 sm:px-6 lg:px-8">
+        <TodayPanel
+          onOpenVocab={onOpenVocab}
+          onOpenParts={onOpenParts}
+          onOpenDictation={onOpenDictation}
+          onOpenReading={onOpenReading}
+        />
+      </div>
+      <DayWorkspace day={day} progress={progress} onSelectDay={onSelectDay} />
+    </>
   )
 }

@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Headphones, Pause, Play, Volume2 } from 'lucide-react'
+import { Headphones, Pause, Play, RotateCcw, Volume2 } from 'lucide-react'
+import { usePlaybackRate } from '../../../lib/playback'
+import { SpeedControl } from '../../common/SpeedControl'
 
 interface AudioPlayerProps {
   src: string
@@ -20,6 +22,7 @@ export function AudioPlayer({ src, title = 'Audio bài nghe' }: AudioPlayerProps
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(1)
   const [error, setError] = useState(false)
+  const [rate] = usePlaybackRate()
 
   useEffect(() => {
     const audio = audioRef.current
@@ -39,6 +42,23 @@ export function AudioPlayer({ src, title = 'Audio bài nghe' }: AudioPlayerProps
       audio.removeEventListener('error', onErr)
     }
   }, [])
+
+  // Áp tốc độ phát (giữ nguyên cao độ giọng nhờ preservesPitch).
+  useEffect(() => {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.playbackRate = rate
+    // @ts-expect-error thuộc tính có tiền tố ở một số trình duyệt
+    audio.preservesPitch = audio.mozPreservesPitch = audio.webkitPreservesPitch = true
+  }, [rate, src])
+
+  const replay = () => {
+    const audio = audioRef.current
+    if (!audio) return
+    audio.currentTime = 0
+    setCurrent(0)
+    void audio.play().then(() => setPlaying(true), () => setError(true))
+  }
 
   const toggle = () => {
     const audio = audioRef.current
@@ -69,9 +89,10 @@ export function AudioPlayer({ src, title = 'Audio bài nghe' }: AudioPlayerProps
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-card">
-      <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
+      <div className="mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-700">
         <Headphones className="h-4 w-4 text-brand-600" />
         {title}
+        {!error && <SpeedControl className="ml-auto" />}
       </div>
 
       <audio ref={audioRef} src={src} preload="metadata" />
@@ -94,6 +115,15 @@ export function AudioPlayer({ src, title = 'Audio bài nghe' }: AudioPlayerProps
             ) : (
               <Play className="h-5 w-5 pl-0.5" />
             )}
+          </button>
+          <button
+            type="button"
+            onClick={replay}
+            className="press grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-500 hover:bg-slate-100"
+            aria-label="Nghe lại từ đầu"
+            title="Nghe lại từ đầu"
+          >
+            <RotateCcw className="h-4 w-4" />
           </button>
 
           <div className="min-w-0 flex-1">

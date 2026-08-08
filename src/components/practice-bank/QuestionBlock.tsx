@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Check, Loader2, Volume2, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
 import { answerPt, type OptionKey, type PtAnswer, type PtQuestion } from '../../lib/practiceApi'
+import type { SpeechTurn } from '../../lib/speech'
 
 interface Props {
   question: PtQuestion
@@ -144,10 +145,10 @@ export function SpeakButton({
   big,
   onSpeak,
 }: {
-  lines: string[]
+  lines: SpeechTurn[]
   label: string
   big?: boolean
-  onSpeak: (lines: string[]) => void
+  onSpeak: (lines: SpeechTurn[]) => void
 }) {
   return (
     <button

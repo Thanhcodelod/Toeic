@@ -4,7 +4,11 @@ import {
   BookOpenCheck,
   GraduationCap,
   ListChecks,
+  BarChart3,
+  ClipboardCheck,
+  Compass,
   Headphones,
+  PenLine,
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
@@ -29,6 +33,10 @@ interface LayoutProps {
   onOpenDictation: () => void
   onOpenReading: () => void
   onOpenParts: () => void
+  onOpenStats: () => void
+  onOpenMock: () => void
+  onOpenOutput: () => void
+  onOpenCourse: () => void
   children: ReactNode
 }
 
@@ -43,6 +51,10 @@ export function Layout({
   onOpenDictation,
   onOpenReading,
   onOpenParts,
+  onOpenStats,
+  onOpenMock,
+  onOpenOutput,
+  onOpenCourse,
   children,
 }: LayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -103,6 +115,14 @@ export function Layout({
           <div className="ml-auto hidden items-center gap-2 xl:flex">
             <button
               type="button"
+              onClick={onOpenCourse}
+              className="press inline-flex items-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-700 hover:bg-teal-100"
+            >
+              <Compass className="h-4 w-4" />
+              Khóa học
+            </button>
+            <button
+              type="button"
               onClick={onOpenDictation}
               className="press inline-flex items-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
             >
@@ -133,6 +153,30 @@ export function Layout({
               <ListChecks className="h-4 w-4" />
               Ôn Part 1–7
             </button>
+            <button
+              type="button"
+              onClick={onOpenStats}
+              className="press inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
+            >
+              <BarChart3 className="h-4 w-4" />
+              Thống kê
+            </button>
+            <button
+              type="button"
+              onClick={onOpenMock}
+              className="press inline-flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-100"
+            >
+              <ClipboardCheck className="h-4 w-4" />
+              Đề mô phỏng
+            </button>
+            <button
+              type="button"
+              onClick={onOpenOutput}
+              className="press inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-100"
+            >
+              <PenLine className="h-4 w-4" />
+              Nói &amp; Viết
+            </button>
             <div className="w-40">
               <ProgressBar
                 value={progress.completionPct}
@@ -146,6 +190,14 @@ export function Layout({
 
           {/* Nút gọn (icon) — điện thoại + iPad, tới trước cỡ desktop lớn */}
           <div className="ml-auto flex items-center gap-1.5 xl:hidden">
+            <button
+              type="button"
+              onClick={onOpenCourse}
+              aria-label="Khóa học TOEIC"
+              className="press grid h-9 w-9 place-items-center rounded-lg border border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100"
+            >
+              <Compass className="h-4 w-4" />
+            </button>
             <button
               type="button"
               onClick={onOpenDictation}
@@ -177,6 +229,30 @@ export function Layout({
               className="press grid h-9 w-9 place-items-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100"
             >
               <ListChecks className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenStats}
+              aria-label="Thống kê"
+              className="press grid h-9 w-9 place-items-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+            >
+              <BarChart3 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenMock}
+              aria-label="Đề mô phỏng"
+              className="press grid h-9 w-9 place-items-center rounded-lg border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
+            >
+              <ClipboardCheck className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onOpenOutput}
+              aria-label="Nói và Viết"
+              className="press grid h-9 w-9 place-items-center rounded-lg border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+            >
+              <PenLine className="h-4 w-4" />
             </button>
             <UserMenu compact />
           </div>
