@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
-  ArrowLeft,
   ClipboardCheck,
   Clock,
   Loader2,
@@ -8,6 +7,8 @@ import {
   Volume2,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { SectionNav } from '../common/SectionNav'
+import type { AppView } from '../../lib/views'
 import { UserMenu } from '../../auth/UserMenu'
 import { useSpeak } from '../../hooks/useSpeak'
 import { toSpokenTurns } from '../../lib/speech'
@@ -30,7 +31,7 @@ type Phase = 'setup' | 'running' | 'result'
 const LETTERS: OptionKey[] = ['A', 'B', 'C', 'D']
 const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
-export function MockTestPage({ onBack }: { onBack: () => void }) {
+export function MockTestPage({ onNavigate }: { onNavigate: (v: AppView) => void }) {
   const { speakSequence, supported } = useSpeak()
   const [phase, setPhase] = useState<Phase>('setup')
   const [test, setTest] = useState<MockTest | null>(null)
@@ -127,9 +128,6 @@ export function MockTestPage({ onBack }: { onBack: () => void }) {
   const header = (right?: React.ReactNode) => (
     <header className="z-20 shrink-0 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="flex items-center gap-3 px-4 py-3 lg:px-6">
-        <button type="button" onClick={onBack} className="press inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
-          <ArrowLeft className="h-4 w-4" /> Lộ trình 90 ngày
-        </button>
         <div className="flex items-center gap-2">
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-rose-500 to-rose-700 text-white shadow-card">
             <ClipboardCheck className="h-5 w-5" />
@@ -137,6 +135,9 @@ export function MockTestPage({ onBack }: { onBack: () => void }) {
           <h1 className="text-sm font-bold text-slate-900 sm:text-base">Đề mô phỏng</h1>
         </div>
         <div className="ml-auto flex items-center gap-3">{right}<UserMenu /></div>
+      </div>
+      <div className="border-t border-slate-100 px-4 pb-2.5 lg:px-6">
+        <SectionNav current="mock" onNavigate={onNavigate} />
       </div>
     </header>
   )
@@ -235,7 +236,7 @@ export function MockTestPage({ onBack }: { onBack: () => void }) {
               <button type="button" onClick={() => setPhase('setup')} className="press inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-card hover:bg-rose-700">
                 Làm đề khác
               </button>
-              <button type="button" onClick={onBack} className="press inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              <button type="button" onClick={() => onNavigate('course')} className="press inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
                 Xong
               </button>
             </div>

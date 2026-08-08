@@ -7,6 +7,8 @@ import {
   ListChecks,
 } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { SectionNav } from '../common/SectionNav'
+import type { AppView } from '../../lib/views'
 import { UserMenu } from '../../auth/UserMenu'
 import {
   PARTS,
@@ -21,10 +23,10 @@ import {
 import { PartRunner } from './PartRunner'
 
 interface Props {
-  onBack: () => void
+  onNavigate: (v: AppView) => void
 }
 
-export function PracticePartsPage({ onBack }: Props) {
+export function PracticePartsPage({ onNavigate }: Props) {
   const [part, setPartState] = useState<Part>(1)
   const [lesson, setLesson] = useState<number | null>(null)
   const [stats, setStats] = useState<PtStats | null>(null)
@@ -52,14 +54,6 @@ export function PracticePartsPage({ onBack }: Props) {
     <div className="flex min-h-screen flex-col bg-slate-50">
       <header className="z-20 shrink-0 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="flex items-center gap-3 px-4 py-3 lg:px-6">
-          <button
-            type="button"
-            onClick={onBack}
-            className="press inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Lộ trình 90 ngày
-          </button>
           <div className="flex items-center gap-2">
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-card">
               <ListChecks className="h-5 w-5" />
@@ -71,6 +65,9 @@ export function PracticePartsPage({ onBack }: Props) {
           <div className="ml-auto">
             <UserMenu />
           </div>
+        </div>
+        <div className="border-t border-slate-100 px-4 pb-2.5 lg:px-6">
+          <SectionNav current="parts" onNavigate={onNavigate} />
         </div>
       </header>
 

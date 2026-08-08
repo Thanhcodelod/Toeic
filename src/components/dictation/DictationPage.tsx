@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ArrowLeft, CheckCircle2, Headphones, Loader2 } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { SectionNav } from '../common/SectionNav'
+import type { AppView } from '../../lib/views'
 import { UserMenu } from '../../auth/UserMenu'
 import { DictationExercise } from './DictationExercise'
 import {
@@ -21,7 +23,7 @@ const PART_TABS = [
   { p: 4, label: 'Part 4', hint: 'Bài nói' },
 ]
 
-export function DictationPage({ onBack }: { onBack: () => void }) {
+export function DictationPage({ onNavigate }: { onNavigate: (v: AppView) => void }) {
   const [tests, setTests] = useState<DictationTest[]>([])
   const [stats, setStats] = useState<Record<number, { done: number; total: number }>>({})
   const [loading, setLoading] = useState(true)
@@ -99,10 +101,6 @@ export function DictationPage({ onBack }: { onBack: () => void }) {
   const header = (
     <header className="z-20 shrink-0 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="flex items-center gap-3 px-4 py-3 lg:px-6">
-        <button type="button" onClick={onBack}
-          className="press inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
-          <ArrowLeft className="h-4 w-4" /> Lộ trình 90 ngày
-        </button>
         <div className="flex items-center gap-2">
           <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-sky-500 to-sky-700 text-white shadow-card">
             <Headphones className="h-5 w-5" />
@@ -110,6 +108,9 @@ export function DictationPage({ onBack }: { onBack: () => void }) {
           <h1 className="text-sm font-bold text-slate-900 sm:text-base">Nghe chép chính tả</h1>
         </div>
         <div className="ml-auto"><UserMenu /></div>
+      </div>
+      <div className="border-t border-slate-100 px-4 pb-2.5 lg:px-6">
+        <SectionNav current="dictation" onNavigate={onNavigate} />
       </div>
     </header>
   )

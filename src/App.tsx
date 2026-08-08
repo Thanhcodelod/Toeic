@@ -87,21 +87,21 @@ export default function App() {
 
   let content: ReactNode
   if (view === 'vocab') {
-    content = <VocabReviewPage onBack={() => selectView('course')} />
+    content = <VocabReviewPage onNavigate={selectView} />
   } else if (view === 'dictation') {
-    content = <DictationPage onBack={() => selectView('course')} />
+    content = <DictationPage onNavigate={selectView} />
   } else if (view === 'reading') {
-    content = <ReadingPage onBack={() => selectView('course')} />
+    content = <ReadingPage onNavigate={selectView} />
   } else if (view === 'parts') {
-    content = <PracticePartsPage onBack={() => selectView('course')} />
+    content = <PracticePartsPage onNavigate={selectView} />
   } else if (view === 'stats') {
-    content = <StatsPage onBack={() => selectView('course')} />
+    content = <StatsPage onNavigate={selectView} />
   } else if (view === 'mock') {
-    content = <MockTestPage onBack={() => selectView('course')} />
+    content = <MockTestPage onNavigate={selectView} />
   } else if (view === 'output') {
-    content = <OutputPage onBack={() => selectView('course')} />
+    content = <OutputPage onNavigate={selectView} />
   } else if (view === 'khoahoc') {
-    content = <CoursePage onBack={() => selectView('course')} />
+    content = <CoursePage onNavigate={selectView} />
   } else {
     content = (
       <Layout

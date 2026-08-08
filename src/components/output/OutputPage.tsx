@@ -1,19 +1,21 @@
 import { useState } from 'react'
-import { ArrowLeft, Mic, PenLine } from 'lucide-react'
+import { Mic, PenLine } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { SectionNav } from '../common/SectionNav'
+import type { AppView } from '../../lib/views'
 import { WritingTab } from './WritingTab'
 import { SpeakingTab } from './SpeakingTab'
 
 type Tab = 'writing' | 'speaking'
 
-export function OutputPage({ onBack }: { onBack: () => void }) {
+export function OutputPage({ onNavigate }: { onNavigate: (v: AppView) => void }) {
   const [tab, setTab] = useState<Tab>('writing')
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      <button type="button" onClick={onBack} className="press mb-4 inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100">
-        <ArrowLeft className="h-4 w-4" /> Về lộ trình
-      </button>
+      <div className="mb-4">
+        <SectionNav current="output" onNavigate={onNavigate} />
+      </div>
 
       <header className="mb-5 text-center">
         <h1 className="text-2xl font-bold text-slate-900">Nói &amp; Viết</h1>

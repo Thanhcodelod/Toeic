@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, Compass, ListTree, Loader2, X } from 'lucide-react'
+import { Compass, ListTree, Loader2, X } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { SectionNav } from '../common/SectionNav'
+import type { AppView } from '../../lib/views'
 import { UserMenu } from '../../auth/UserMenu'
 import { CourseOutline } from './CourseOutline'
 import { LessonView } from './LessonView'
@@ -11,7 +13,7 @@ function firstLessonKey(o: COutline): string | null {
   return null
 }
 
-export function CoursePage({ onBack }: { onBack: () => void }) {
+export function CoursePage({ onNavigate }: { onNavigate: (v: AppView) => void }) {
   const [outline, setOutline] = useState<COutline | null>(null)
   const [activeKey, setActiveKey] = useState<string | null>(null)
   const [lesson, setLesson] = useState<CourseLesson | null>(null)
@@ -53,13 +55,6 @@ export function CoursePage({ onBack }: { onBack: () => void }) {
       {/* Header */}
       <header className="z-20 shrink-0 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="flex items-center gap-3 px-4 py-3 lg:px-6">
-          <button
-            type="button"
-            onClick={onBack}
-            className="press inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100"
-          >
-            <ArrowLeft className="h-4 w-4" /> Lộ trình 90 ngày
-          </button>
           <div className="flex items-center gap-2">
             <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-to-br from-teal-500 to-teal-700 text-white shadow-card">
               <Compass className="h-5 w-5" />
@@ -74,6 +69,9 @@ export function CoursePage({ onBack }: { onBack: () => void }) {
           <div className="ml-auto sm:ml-2">
             <UserMenu />
           </div>
+        </div>
+        <div className="border-t border-slate-100 px-4 pb-2.5 lg:px-6">
+          <SectionNav current="khoahoc" onNavigate={onNavigate} />
         </div>
       </header>
 
